@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>documentation</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+ 
+  
+  <link rel="stylesheet" href="https://unpkg.com/tachyons/css/tachyons.min.css">
+ 
+  <h1 class='tc fs-normal-l bg-light-gray'>Api Documentation</h1>
+ <h4 class='tc'>Send post request at : <code> stingapi/api/v1/cardio/risk</code><br> or <a href='cardiorisk'>to check</a></href> </h4>
+ 
+  <article class="cf">
+    <div class="fl w-50  tc">
+        <h1 class='bg-light-gray'>Getting started</h1>
+        <h3>How to send api request ?</h3>
+        <code>curl --request POST \<br>
+          --url  stingapi/api/v1/cardio/risk\<br>
+          --header 'Content-Type: application/json' \<br>
+          --data '{
+            "age": "age",<br>
+            "gender": "gender",<br>
+            "height": "height",<br>
+            "weight": "weight",<br>
+            "ap_hi": "high blood pressure",<br>
+            "ap_low": "low blood pressure",<br>
+            "cholesterol": "cholestrol",<br>
+            "gluc": "glucose",<br>
+            "smoke": "smoke 0 for no 1 for yes",<br>
+            "alco": "alcohol consumtion  0 for no 1 for yes",<br>
+            "active": "physically active 0 for no 1 for yes"
+        }' <br>
+      </code><br><br>
+        <a>Copy the curl example above.<br>
+          Paste the curl call into your favorite text editor.<br>
+          Copy the code and paste it in your terminal.<br>
+          Hit Enter.<br>
+          please format the values as mentioned..<br>
+          </a>
+         <h4> in returned responce <br>first value is probability of no<br>
+          second is probability of yes
+        </h4>
+      </div>
+
+    <div class="fl w-50  tc">
+      <h1 class='bg-light-gray'>example</h1>
+      <h3>How to send api request ?</h3>
+      <code>curl --request POST \<br>
+        --url https://api.sendgrid.com/v3/mail/send \<br>
+        --header 'Content-Type: application/json' \<br>
+        --data <br>
+        
+        
+        '{
+            "age": "12",<br>
+            "gender": "0",<br>
+            "height": "168",<br>
+            "weight": "72",<br>
+            "ap_hi": "156",<br>
+            "ap_low": "50",<br>
+            "cholesterol": "1",<br>
+            "gluc": "3",<br>
+            "smoke": "0",<br>
+            "alco": "1",<br>
+            "active": "1"
+        }'<br>
+    </code><br><br>
+      <h3>Response:<br></h3>
+      <code>{
+        "message": "cardio risk ",<br>
+        "data": [<br>
+            [<br>
+            0.29623026625949705,
+            0.703769733740503
+            ]<br>
+        ]<br>
+    }<br></code>
+    shows 29 % chance of not getting cardiovascular disease...<br>
+    and 70.37% chance of getting cardiovascular disease...
+  
+
+    </div>
+  </article>
+  <footer class="pv4 ph3 ph5-m ph6-l mid-gray">
+    <small class="f6 db tc">© 2021 <b class="">stingapi Inc</b>., All Rights Reserved</small>
+    <div class="tc mt3">
+      <a href="#" title="Language" class="f6 dib ph2 link mid-gray dim">Language</a>
+      <a href="#"    title="Terms" class="f6 dib ph2 link mid-gray dim">Terms of Use</a>
+      <a href="#"  title="Privacy" class="f6 dib ph2 link mid-gray dim">Privacy</a>
+    </div>
+  </footer>
+  
+</body>
+</html>
