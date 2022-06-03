@@ -146,23 +146,25 @@ def cardiorisk2(request):
         # tfidf=TfidfVectorizer(max_df=0.90, min_df=2,max_features=100,stop_words='english')
         tfidf_matrix=tfidf.fit_transform(live_dataset['Tidy_Tweets'])
         Log_Reg = pickle.load(open(filename, 'rb'))
-        prediction_live_tfidf = Log_Reg.predict_proba(tfidf_matrix)
-        
-        test_pred_int = prediction_live_tfidf[:,1] >= 0.3
-        test_pred_int = test_pred_int.astype(np.int)
-        df5['label'] = test_pred_int
+        try:
+            prediction_live_tfidf = Log_Reg.predict_proba(tfidf_matrix)
+            test_pred_int = prediction_live_tfidf[:,1] >= 0.3
+            test_pred_int = test_pred_int.astype(np.int)
+            df5['label'] = test_pred_int
+        except ValueError as ve:
+            return JsonResponse({"message":"count of words in dataset is not more than 100."})
 
         
         
         return JsonResponse({"data":df5.to_json()})
     #     p=JSONParser().parse(request)
        
-        x=[]
-        for a in p:
-            x.append(int(p[a]))
-        aa=np.array([x])
-        aa.reshape(-1,1)
-        xx=loaded_model.predict_proba(aa)
-        return Response({"message": "cardio risk", "data": xx})
+    #     x=[]
+    #     for a in p:
+    #         x.append(int(p[a]))
+    #     aa=np.array([x])
+    #     aa.reshape(-1,1)
+    #     xx=loaded_model.predict_proba(aa)
+    #     return Response({"message": "cardio risk", "data": xx})
        
-    return Response({"message": "please send data in format ",'data':st})
+    # return Response({"message": "please send data in format ",'data':st})
