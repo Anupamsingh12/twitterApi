@@ -156,7 +156,8 @@ def cardiorisk2(request):
 
         
         
-        return JsonResponse({"data":df5.to_json()})
+        # return JsonResponse({"data":df5.to_json()})
+        return JsonResponse({"data":{'date':df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),"IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist(),"label":df5['label'].values.tolist()}})
     #     p=JSONParser().parse(request)
        
     #     x=[]
