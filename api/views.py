@@ -69,7 +69,7 @@ def get_tweets1(df5,Topic1, Count1, coordinates, result_type, until_date):
     #for tweet in tweepy.Cursor(api.search_tweets, geocode = coordinates, lang = 'en', result_type = result_type, until = until_date, count = 100).items(max_tweets)
     for tweet in tweepy.Cursor(api.search_tweets, q=Topic1, count=Count1, geocode = coordinates, lang = 'en', result_type = result_type, until = until_date).items():
     #for tweet in tweepy.Cursor(api.search_tweets, q=Topic,count=100, lang='en').items():
-        print(i, end='\r')
+        # print(i, end='\r')
         df5.loc[i, 'Date']= tweet.created_at
         df5.loc[i, 'User']= tweet.user.name
         df5.loc[i, 'IsVerified']= tweet.user.verified
@@ -85,7 +85,7 @@ def get_tweets1(df5,Topic1, Count1, coordinates, result_type, until_date):
             pass
 
 def getTweetFromData(a,b,c,d,e,df5):
-    print(df5.head())
+    # print(df5.head())
     # coordinates = '34.083656,74.797371,150mi'
     # Topic1 = 'militant'
     # Count1 = 150
@@ -115,7 +115,7 @@ def cardiorisk2(request):
     
     if request.method == 'POST':
      
-        print("asdadasdasd")
+        # print("asdadasdasd")
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
         a=body["coordinates"]  
@@ -132,7 +132,7 @@ def cardiorisk2(request):
         print("inside djkfsfaskj")
         filename='api/LogRegModel.sav'  
         getTweetFromData(a,b,c,d,e,df5)
-        print(df5.head())
+        # print(df5.head())
         if df5.empty:
             return JsonResponse({"message":"no data returned from twitter"})
         live_dataset = df5.copy()
@@ -156,10 +156,24 @@ def cardiorisk2(request):
         except ValueError as ve:
             return JsonResponse({"message":"count of words in dataset is not more than 100."})
 
-        
-        
+        # tokenized_tweet = df5['Tweet'].apply(lambda x: x.split())
+        df5["Tweet"] = df5["Tweet"].str.replace("[^a-zA-Z#]", " ")
+        tokenized_tweet=df5["Tweet"].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
+        # xxx= df5['Tweet'].str.split(expand=True).stack().value_counts()
+        # print("=========================001------------------------------------")
+        # print(tokenized_tweet)
+        tokenized_tweet = tokenized_tweet.apply(lambda x: x.split())
+        tokenized_tweet = tokenized_tweet.apply(lambda x: [ps.stem(i) for i in x])
+        for i in range(len(tokenized_tweet)):
+            tokenized_tweet[i] = ' '.join(tokenized_tweet[i])
+        yyy=tokenized_tweet
+
+        xxx= yyy.str.split(expand=True).stack().value_counts()
+        # print("=====================================================================================")
+        # print(xxx.to_dict())
+
         # return JsonResponse({"data":df5.to_json()})
-        return JsonResponse({"data":{'date':df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),"IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist(),"label":df5['label'].values.tolist()}})
+        return JsonResponse({"data":{'date':df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),"IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist(),"label":df5['label'].values.tolist()},"wordCounts":xxx.to_dict()})
     #     p=JSONParser().parse(request)
        
     #     x=[]
