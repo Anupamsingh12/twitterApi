@@ -133,6 +133,8 @@ def cardiorisk2(request):
         filename='api/LogRegModel.sav'  
         getTweetFromData(a,b,c,d,e,df5)
         print(df5.head())
+        if df5.empty:
+            return JsonResponse({"message":"no data returned from twitter"})
         live_dataset = df5.copy()
         live_dataset['Tidy_Tweets'] = np.vectorize(remove_pattern)(live_dataset['Tweet'], "@[\w]*")
         live_dataset['Tidy_Tweets'] = live_dataset['Tidy_Tweets'].str.replace("[^a-zA-Z#]", " ")
