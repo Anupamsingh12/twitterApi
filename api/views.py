@@ -130,7 +130,8 @@ def cardiorisk2(request):
         tfidf = pickle.load(open(filename, 'rb'))
         df5 = pd.DataFrame(columns=["Date","User","IsVerified","Tweet","Likes","RT",'User_location'])
         print("inside djkfsfaskj")
-        filename='api/LogRegModel.sav'  
+        # filename='api/LogRegModel.sav'  
+        filename='api/logisticNew.sav'  
         getTweetFromData(a,b,c,d,e,df5)
         # print(df5.head())
         if df5.empty:
@@ -149,9 +150,10 @@ def cardiorisk2(request):
         tfidf_matrix=tfidf.fit_transform(live_dataset['Tidy_Tweets'])
         Log_Reg = pickle.load(open(filename, 'rb'))
         try:
-            prediction_live_tfidf = Log_Reg.predict_proba(tfidf_matrix)
-            test_pred_int = prediction_live_tfidf[:,1] >= 0.3
-            test_pred_int = test_pred_int.astype(np.int)
+            prediction_live_tfidf = Log_Reg.predict(tfidf_matrix)
+            
+            # test_pred_int = prediction_live_tfidf[:,1] >= 0.3
+            test_pred_int = prediction_live_tfidf.astype(np.int)
             df5['label'] = test_pred_int
         except ValueError as ve:
             return JsonResponse({"message":"count of words in dataset is not more than 100."})
