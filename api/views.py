@@ -17,6 +17,8 @@ from rest_framework.parsers import JSONParser
 import tweepy
 import pandas as pd
 import re
+from sklearn.feature_extraction import text
+stop = text.ENGLISH_STOP_WORDS
 consumer_key = 'HgEwalkiOGT4GHwRr9dqCa7UU' #API Key
 consumer_secret = 'zASPPh2IGxN8hqTMxSnAkGQtMSpHUoL7qR8GFcQCPJ8HEXUFAJ' #API key secret
 access_token = '1466028468005703680-fs47RLAsOeWrkqN4TQapR8GZwnKhiX'
@@ -163,13 +165,16 @@ def cardiorisk2(request):
         # df5["Tweet"] = df5["Tweet"].str.replace("[^a-zA-Z#]", " ")
         # df5['Tweet'] = df5["Tweet"].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
         # tokenized_tweet=df5["Tweet"].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
+        
         df5["Tweet"]= np.vectorize(remove_pattern)(df5['Tweet'], "@[\w]*")
         tokenized_tweet= df5["Tweet"].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
         tokenized_tweet=tokenized_tweet.str.replace("[^a-zA-Z#]", " ")
-        tokenized_tweet=tokenized_tweet.apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
+        
+        tokenized_tweet=tokenized_tweet.apply(lambda x: ' '.join([w for w in x.split() if len(w)>2]))
 
         tokenized_tweet = tokenized_tweet.apply(lambda x: x.split())
         tokenized_tweet = tokenized_tweet.apply(lambda x: [ps.stem(i) for i in x])
+        tokenized_tweet=tokenized_tweet.apply(lambda x: [item for item in x if item not in stop])
         for i in range(len(tokenized_tweet)):
             tokenized_tweet[i] = ' '.join(tokenized_tweet[i])
         yyy=tokenized_tweet
