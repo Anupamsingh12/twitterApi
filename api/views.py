@@ -138,6 +138,7 @@ def cardiorisk2(request):
             return JsonResponse({"message":"no data returned from twitter"})
         live_dataset = df5.copy()
         live_dataset['Tidy_Tweets'] = np.vectorize(remove_pattern)(live_dataset['Tweet'], "@[\w]*")
+        live_dataset['Tidy_Tweets'] = live_dataset['Tidy_Tweets'].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
         live_dataset['Tidy_Tweets'] = live_dataset['Tidy_Tweets'].str.replace("[^a-zA-Z#]", " ")
         live_dataset['Tidy_Tweets'] = live_dataset['Tidy_Tweets'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
         tokenized_tweet1 = live_dataset['Tidy_Tweets'].apply(lambda x: x.split())
@@ -159,11 +160,14 @@ def cardiorisk2(request):
             return JsonResponse({"message":"count of words in dataset is not more than 100."})
 
         # tokenized_tweet = df5['Tweet'].apply(lambda x: x.split())
-        df5["Tweet"] = df5["Tweet"].str.replace("[^a-zA-Z#]", " ")
-        tokenized_tweet=df5["Tweet"].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
-        # xxx= df5['Tweet'].str.split(expand=True).stack().value_counts()
-        # print("=========================001------------------------------------")
-        # print(tokenized_tweet)
+        # df5["Tweet"] = df5["Tweet"].str.replace("[^a-zA-Z#]", " ")
+        # df5['Tweet'] = df5["Tweet"].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
+        # tokenized_tweet=df5["Tweet"].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
+        df5["Tweet"]= np.vectorize(remove_pattern)(df5['Tweet'], "@[\w]*")
+        tokenized_tweet= df5["Tweet"].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
+        tokenized_tweet=tokenized_tweet.str.replace("[^a-zA-Z#]", " ")
+        tokenized_tweet=tokenized_tweet.apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
+
         tokenized_tweet = tokenized_tweet.apply(lambda x: x.split())
         tokenized_tweet = tokenized_tweet.apply(lambda x: [ps.stem(i) for i in x])
         for i in range(len(tokenized_tweet)):
