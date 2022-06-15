@@ -228,8 +228,9 @@ def newsAnanlyserView(request):
 
 
     url = 'https://newsapi.org/v2/everything'
-    api_key = 'ef935e216c3e404c869b01a9a0da76ee'
-    # api_key = 'f84317925d46427ab3903575e1d2260d'
+    # api_key = 'ef935e216c3e404c869b01a9a0da76ee'
+    api_key = 'f84317925d46427ab3903575e1d2260d'
+    # api_key = '31fcde72f0bc42f2871df05c681f3117'
 
     if request.method == 'POST':
      
@@ -243,13 +244,15 @@ def newsAnanlyserView(request):
         e=body["until_date"] 
 
         parameters_headlines = {
-        'q': b,
+        'q': "army",
         'sortBy':'popularity',
-        'pageSize': c,
+        'pageSize': 100,
         'apiKey': api_key,
         'language': 'en',
         'from' : e   
     }
+        print("==============================")
+        print(parameters_headlines)
         filename='api/tfidf.sav'
         tfidf = pickle.load(open(filename, 'rb'))
         filename='api/logisticNew.sav'
