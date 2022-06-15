@@ -29,6 +29,7 @@ api = tweepy.API(auth, wait_on_rate_limit=True)
 from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk import PorterStemmer
 import json
+import requests
 
 ps = PorterStemmer()
 
@@ -196,3 +197,101 @@ def cardiorisk2(request):
     #     return Response({"message": "cardio risk", "data": xx})
        
     # return Response({"message": "please send data in format ",'data':st})
+
+def get_articles(file): 
+    article_results = [] 
+    for i in range(len(file)):
+        article_dict = {}
+        article_dict['title'] = file[i]['title']
+        article_dict['author'] = file[i]['author']
+        article_dict['source'] = file[i]['source']
+        article_dict['description'] = file[i]['description']
+        article_dict['content'] = file[i]['content']
+        article_dict['pub_date'] = file[i]['publishedAt']
+        article_dict['url'] = file[i]["url"]
+        article_dict['photo_url'] = file[i]['urlToImage']
+        article_results.append(article_dict)
+    return article_results
+
+def source_getter(df):
+    source = []
+    for source_dict in df['source']:
+        source.append(source_dict['name'])
+    df['source'] = source #append the source to the df
+def _removeNonAscii(s): 
+    return "".join(i for i in s if ord(i)<128)
+
+
+
+@api_view(['GET', 'POST'])
+def newsAnanlyserView(request):
+
+
+    url = 'https://newsapi.org/v2/everything'
+    api_key = 'ef935e216c3e404c869b01a9a0da76ee'
+    # api_key = 'f84317925d46427ab3903575e1d2260d'
+
+    if request.method == 'POST':
+     
+        # print("asdadasdasd")
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        # a=body["coordinates"]  
+        b=body["topic"]  
+        c=int(body["count"])  
+        d=body["result_type"]  
+        e=body["until_date"] 
+
+        parameters_headlines = {
+        'q': b,
+        'sortBy':'popularity',
+        'pageSize': c,
+        'apiKey': api_key,
+        'language': 'en',
+        'from' : e   
+    }
+        filename='api/tfidf.sav'
+        tfidf = pickle.load(open(filename, 'rb'))
+        filename='api/logisticNew.sav'
+        Log_Reg = pickle.load(open(filename, 'rb'))
+
+        response_headline = requests.get(url, params = parameters_headlines)
+        if not response_headline.status_code == 200:
+            return JsonResponse({"message":"you have exhausted your daily limit.","status_from_news":response_headline.status_code})
+        response_json_headline = response_headline.json()
+        responses = response_json_headline["articles"]
+        # transforming the data from JSON dictionary to a pandas data frame
+        news_articles_df = pd.DataFrame(get_articles(responses))
+        # printing the head to check the format and the working of the get_articles function
+        news_articles_df.head()
+        news_articles_df['pub_date'] = pd.to_datetime(news_articles_df['pub_date']).apply(lambda x: x.date())
+        news_articles_df.dropna(inplace=True)
+        news_articles_df = news_articles_df[~news_articles_df['description'].isnull()]
+        news_articles_df['combined_text'] = news_articles_df['title'].map(str) +" "+ news_articles_df['content'].map(str)
+        live_dataset = news_articles_df['combined_text'].copy()
+        live_dataset['combined_text'] = news_articles_df['combined_text'].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
+        live_dataset['combined_text'] = live_dataset['combined_text'].str.replace("[^a-zA-Z#]", " ")
+        live_dataset['combined_text'] = live_dataset['combined_text'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
+        # live_dataset['combined_text'] = np.vectorize(remove_pattern)(live_dataset['combined_text'], "@[\w]*")
+        print(live_dataset['combined_text'])
+        
+        xxx= live_dataset['combined_text'].str.split(expand=True).stack().value_counts()
+        print(xxx)
+        tokenized_tweet1 = live_dataset['combined_text']
+        live_dataset['combined_text'] = tokenized_tweet1.str.replace("[^a-zA-Z#]", " ")
+        live_dataset_prepare = live_dataset['combined_text']
+        
+        tfidf_matrix=tfidf.fit_transform(tokenized_tweet1)
+        live_dataset['label']=[]
+        try:
+            prediction_live_tfidf = Log_Reg.predict(tfidf_matrix)
+                
+            # test_pred_int = prediction_live_tfidf[:,1] >= 0.3
+            test_pred_int = prediction_live_tfidf.astype(np.int)
+            print(test_pred_int)
+            live_dataset['label'] = test_pred_int
+            print(test_pred_int)
+        except ValueError as ve:
+            return JsonResponse({"message":"count of words in dataset is not more than 100."})
+        return JsonResponse({"source":news_articles_df['source'].values.tolist(),"pub_date":news_articles_df['pub_date'].values.tolist()
+        ,"url":news_articles_df['url'].values.tolist(),"label":json.dumps(test_pred_int.tolist()),"wordCounts":xxx.to_dict()})
