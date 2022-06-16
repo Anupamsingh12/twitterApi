@@ -255,7 +255,7 @@ def newsAnanlyserView(request):
         print(parameters_headlines)
         filename='api/tfidf.sav'
         tfidf = pickle.load(open(filename, 'rb'))
-        filename='api/logisticNew.sav'
+        filename='api/logisticNew2.sav'
         Log_Reg = pickle.load(open(filename, 'rb'))
 
         response_headline = requests.get(url, params = parameters_headlines)
