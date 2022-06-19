@@ -17,7 +17,9 @@ from rest_framework.parsers import JSONParser
 import tweepy
 import pandas as pd
 import re
+import numpy 
 from sklearn.feature_extraction import text
+from .models import ModelPredictions,newsModelPredictions
 stop = text.ENGLISH_STOP_WORDS
 consumer_key = 'HgEwalkiOGT4GHwRr9dqCa7UU' #API Key
 consumer_secret = 'zASPPh2IGxN8hqTMxSnAkGQtMSpHUoL7qR8GFcQCPJ8HEXUFAJ' #API key secret
@@ -171,7 +173,7 @@ def cardiorisk2(request):
         tokenized_tweet= df5["Tweet"].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
         tokenized_tweet=tokenized_tweet.str.replace("[^a-zA-Z#]", " ")
         
-        tokenized_tweet=tokenized_tweet.apply(lambda x: ' '.join([w for w in x.split() if len(w)>2]))
+        tokenized_tweet=tokenized_tweet.apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
 
         tokenized_tweet = tokenized_tweet.apply(lambda x: x.split())
         tokenized_tweet = tokenized_tweet.apply(lambda x: [ps.stem(i) for i in x])
@@ -183,6 +185,14 @@ def cardiorisk2(request):
         xxx= yyy.str.split(expand=True).stack().value_counts()
         # print("=====================================================================================")
         # print(xxx.to_dict())
+        count = df5['label'].value_counts()
+        print(count[-1])
+        print(count[1])
+        print(count[0])
+        mod = ModelPredictions(pred_type="twitter",positive_count=count[1],negetive_count=count[-1],neutral_count=count[0],total_result=len(df5['label'])
+        ,query_String=b,location_cordinate=a)
+        mod.save()
+
 
         # return JsonResponse({"data":df5.to_json()})
         return JsonResponse({"data":{'date':df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),"IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist(),"label":df5['label'].values.tolist()},"wordCounts":xxx.to_dict()})
@@ -242,11 +252,11 @@ def newsAnanlyserView(request):
         c=int(body["count"])  
         d=body["result_type"]  
         e=body["until_date"] 
-
+        print(b)
         parameters_headlines = {
-        'q': "army",
+        'q': str(b),
         'sortBy':'popularity',
-        'pageSize': 100,
+        'pageSize': c,
         'apiKey': api_key,
         'language': 'en',
         'from' : e   
@@ -259,6 +269,7 @@ def newsAnanlyserView(request):
         Log_Reg = pickle.load(open(filename, 'rb'))
 
         response_headline = requests.get(url, params = parameters_headlines)
+        print(response_headline)
         if not response_headline.status_code == 200:
             return JsonResponse({"message":"you have exhausted your daily limit.","status_from_news":response_headline.status_code})
         response_json_headline = response_headline.json()
@@ -294,7 +305,48 @@ def newsAnanlyserView(request):
             print(test_pred_int)
             live_dataset['label'] = test_pred_int
             print(test_pred_int)
+            unique, counts = numpy.unique(test_pred_int, return_counts=True)
+            count = dict(zip(unique, counts))
+            # count = live_dataset['label'].value_counts()
+            print(count)
+            print(count[-1])
+            print(count[1])
+            print(count[0])
+            mod = newsModelPredictions(pred_type="news",positive_count=count[1],negetive_count=count[-1],neutral_count=count[0],total_result=len(test_pred_int)
+            ,query_String=b)
+            mod.save()
         except ValueError as ve:
             return JsonResponse({"message":"count of words in dataset is not more than 100."})
         return JsonResponse({"source":news_articles_df['source'].values.tolist(),"pub_date":news_articles_df['pub_date'].values.tolist()
         ,"url":news_articles_df['url'].values.tolist(),"label":json.dumps(test_pred_int.tolist()),"wordCounts":xxx.to_dict()})
+
+
+@api_view(['GET'])
+def allStats(request):
+    q=request.GET
+    qq=q.get('search_string', 'null')
+    # print(qq)
+    # print(q['type'].split('?'))
+    if q['type']== 'twitter':
+        if not qq=='null' :
+            pred = ModelPredictions.objects.filter(query_String=qq)
+            return JsonResponse({'data':list(pred.values())})
+        
+        else:
+            pred=ModelPredictions.objects.all()
+            return JsonResponse({'data':list(pred.values())})
+    elif  q['type']== 'news':
+        
+        if not qq =='null'  :
+            pred=newsModelPredictions.objects.filter(query_String=qq)
+            return JsonResponse({'data':list(pred.values())})
+        else:    
+            pred=newsModelPredictions.objects.all()
+            return JsonResponse({'data':list(pred.values())})
+    return JsonResponse({"data":[]})
+
+   
+    
+
+# allStats(3)
+    
