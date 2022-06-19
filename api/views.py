@@ -156,10 +156,24 @@ def cardiorisk2(request):
         tfidf_matrix=tfidf.fit_transform(live_dataset['Tidy_Tweets'])
         Log_Reg = pickle.load(open(filename, 'rb'))
         try:
-            prediction_live_tfidf = Log_Reg.predict(tfidf_matrix)
+            prediction_live_tfidf = Log_Reg.predict_proba(tfidf_matrix)
+            pred=[]
+            for a,b,c in prediction_live_tfidf:
+                pp=-1
+                if a>0.8:
+                    pp=-1
+                elif c>=0.10:
+                    pp=1
+                elif b>=0.68:
+                    pp=0
+               
+                pred.append(pp)
             
             # test_pred_int = prediction_live_tfidf[:,1] >= 0.3
-            test_pred_int = prediction_live_tfidf.astype(np.int)
+            # test_pred_int = prediction_live_tfidf.astype(np.int)
+            test_pred_int = pred
+            
+            
             df5['label'] = test_pred_int
         except ValueError as ve:
             return JsonResponse({"message":"count of words in dataset is not more than 100."})
@@ -325,14 +339,32 @@ def newsAnanlyserView(request):
 def allStats(request):
     q=request.GET
     qq=q.get('search_string', 'null')
-    # print(qq)
+    fd=q.get('from_date', 'null')
+    td=q.get('to_date', 'null')
+    location=q.get('location', 'null')
+
+    # p=location.split(',')
+    # print(p)
+    print(qq)
     # print(q['type'].split('?'))
     if q['type']== 'twitter':
-        if not qq=='null' :
+        if (not qq=='null') and (not fd=='null') and (not td=='null'):
+            # print("")
+            pred = ModelPredictions.objects.filter(time__gte = fd,time__lte= td,query_String=qq)
+            return JsonResponse({'data':list(pred.values())})
+        if (not fd=='null') and (not td=='null'):
+            print("ttttttttttttttttttt")
+            pred = ModelPredictions.objects.filter(time__gte = fd,time__lte= td)
+            return JsonResponse({'data':list(pred.values())})
+        elif not qq=='null' :
+            # print("yaha")
             pred = ModelPredictions.objects.filter(query_String=qq)
             return JsonResponse({'data':list(pred.values())})
         
+        
+        
         else:
+            print("yahahaaa")
             pred=ModelPredictions.objects.all()
             return JsonResponse({'data':list(pred.values())})
     elif  q['type']== 'news':
