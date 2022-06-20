@@ -270,7 +270,7 @@ def newsAnanlyserView(request):
         parameters_headlines = {
         'q': str(b),
         'sortBy':'popularity',
-        'pageSize': c,
+        'pageSize': 100,
         'apiKey': api_key,
         'language': 'en',
         'from' : e   
