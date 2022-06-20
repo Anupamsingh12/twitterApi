@@ -158,13 +158,13 @@ def cardiorisk2(request):
         try:
             prediction_live_tfidf = Log_Reg.predict_proba(tfidf_matrix)
             pred=[]
-            for a,b,c in prediction_live_tfidf:
+            for a,b2,c in prediction_live_tfidf:
                 pp=-1
                 if a>0.8:
                     pp=-1
-                elif c>=0.10:
+                elif c>=0.13:
                     pp=1
-                elif b>=0.68:
+                elif b2>=0.68:
                     pp=0
                
                 pred.append(pp)
