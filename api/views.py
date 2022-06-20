@@ -145,6 +145,7 @@ def cardiorisk2(request):
         live_dataset['Tidy_Tweets'] = np.vectorize(remove_pattern)(live_dataset['Tweet'], "@[\w]*")
         live_dataset['Tidy_Tweets'] = live_dataset['Tidy_Tweets'].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
         live_dataset['Tidy_Tweets'] = live_dataset['Tidy_Tweets'].str.replace("[^a-zA-Z#]", " ")
+        
         live_dataset['Tidy_Tweets'] = live_dataset['Tidy_Tweets'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
         tokenized_tweet1 = live_dataset['Tidy_Tweets'].apply(lambda x: x.split())
         tokenized_tweet1 = tokenized_tweet1.apply(lambda x: [ps.stem(i) for i in x])
@@ -153,14 +154,16 @@ def cardiorisk2(request):
         live_dataset['Tidy_Tweets'] = tokenized_tweet1
         live_dataset_prepare = live_dataset['Tidy_Tweets']
         # tfidf=TfidfVectorizer(max_df=0.90, min_df=2,max_features=100,stop_words='english')
+        print("------------------------------")
         tfidf_matrix=tfidf.fit_transform(live_dataset['Tidy_Tweets'])
+        print("hjsdddddddddddddddddddddddddddddddd")
         Log_Reg = pickle.load(open(filename, 'rb'))
         try:
             prediction_live_tfidf = Log_Reg.predict_proba(tfidf_matrix)
             pred=[]
-            for a,b2,c in prediction_live_tfidf:
+            for a1,b2,c in prediction_live_tfidf:
                 pp=-1
-                if a>0.8:
+                if a1>0.8:
                     pp=-1
                 elif c>=0.13:
                     pp=1
@@ -348,17 +351,25 @@ def allStats(request):
     print(qq)
     # print(q['type'].split('?'))
     if q['type']== 'twitter':
-        if (not qq=='null') and (not fd=='null') and (not td=='null'):
+        if (not qq=='null') and (not fd=='null') and (not td=='null') and (not location=='null'):
+            # print("")
+            pred = ModelPredictions.objects.filter(time__gte = fd,time__lte= td,query_String=qq,location_cordinate=location)
+            return JsonResponse({'data':list(pred.values())})
+        elif (not qq=='null') and (not fd=='null') and (not td=='null'):
             # print("")
             pred = ModelPredictions.objects.filter(time__gte = fd,time__lte= td,query_String=qq)
             return JsonResponse({'data':list(pred.values())})
-        if (not fd=='null') and (not td=='null'):
-            print("ttttttttttttttttttt")
+        elif (not fd=='null') and (not td=='null'):
+            # print("ttttttttttttttttttt")
             pred = ModelPredictions.objects.filter(time__gte = fd,time__lte= td)
             return JsonResponse({'data':list(pred.values())})
         elif not qq=='null' :
             # print("yaha")
             pred = ModelPredictions.objects.filter(query_String=qq)
+            return JsonResponse({'data':list(pred.values())})
+        elif not location=='null' :
+            # print("yaha")
+            pred = ModelPredictions.objects.filter(location_cordinate=location)
             return JsonResponse({'data':list(pred.values())})
         
         
