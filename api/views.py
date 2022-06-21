@@ -38,17 +38,17 @@ import requests
 def clean_tweet(tweet):
     return ' '.join(re.sub('(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|([RT])', ' ', str(tweet).lower()).split())
 
-from textblob.classifiers import NaiveBayesClassifier
-df=pd.read_csv('api/train.csv')
-df['tweet'] = df['tweet'].apply(lambda x : clean_tweet(x))
-df['tweet']= df['tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
-df['tweet']=df['tweet'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>2]))
-mast_df=df[['tweet','label']].copy()
-mast_df=list(zip(df['tweet'], df['label']))
-first2k = mast_df[0:2000]
-cl = NaiveBayesClassifier(first2k)
-print("====================== model trainned cl =============================")
-ps = PorterStemmer()
+# from textblob.classifiers import NaiveBayesClassifier
+# df=pd.read_csv('api/train.csv')
+# df['tweet'] = df['tweet'].apply(lambda x : clean_tweet(x))
+# df['tweet']= df['tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+# df['tweet']=df['tweet'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>2]))
+# mast_df=df[['tweet','label']].copy()
+# mast_df=list(zip(df['tweet'], df['label']))
+# first2k = mast_df[0:2000]
+# cl = NaiveBayesClassifier(first2k)
+# print("====================== model trainned cl =============================")
+# ps = PorterStemmer()
 
 def index(request):
     return render(request,'index.html')
@@ -447,7 +447,7 @@ def twitterSentiment(request):
             return JsonResponse({"message":"no data returned from twitter"})
         live_dataset = df5.copy()
         live_dataset['clean_tweet'] = live_dataset['Tweet'].apply(lambda x : clean_tweet(x))
-        live_dataset["Sentiment"] = live_dataset['clean_tweet'].apply(lambda x : analyze_sentiment2(x))
+        live_dataset["Sentiment"] = live_dataset['clean_tweet'].apply(lambda x : analyze_sentiment(x))
     
         ppp= live_dataset["Sentiment"].value_counts()
         print(ppp[-1])
