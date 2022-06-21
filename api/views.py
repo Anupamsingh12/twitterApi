@@ -353,11 +353,11 @@ def allStats(request):
     if q['type']== 'twitter':
         if (not qq=='null') and (not fd=='null') and (not td=='null') and (not location=='null'):
             # print("")
-            pred = ModelPredictions.objects.filter(time__gte = fd,time__lte= td,query_String=qq,location_cordinate=location)
+            pred = ModelPredictions.objects.filter(query_time__gte = fd,query_time__lte= td,query_String=qq,location_cordinate=location)
             return JsonResponse({'data':list(pred.values())})
         elif (not qq=='null') and (not fd=='null') and (not td=='null'):
             # print("")
-            pred = ModelPredictions.objects.filter(time__gte = fd,time__lte= td,query_String=qq)
+            pred = ModelPredictions.objects.filter(query_time__gte = fd,query_time__lte= td,query_String=qq)
             return JsonResponse({'data':list(pred.values())})
         elif (not fd=='null') and (not td=='null'):
             # print("ttttttttttttttttttt")
@@ -391,5 +391,65 @@ def allStats(request):
    
     
 
-# allStats(3)
+
+def clean_tweet(tweet):
+    return ' '.join(re.sub('(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|([RT])', ' ', str(tweet).lower()).split())
+
+from textblob import TextBlob
+def analyze_sentiment(tweet):
+    analysis = TextBlob(tweet)
+    if analysis.sentiment.polarity > 0:
+        return 1
+    elif analysis.sentiment.polarity == 0:
+        return 0
+    else:
+        return -1
+
+
+@api_view(['POST'])
+def twitterSentiment(request):
     
+    
+    if request.method == 'POST':
+     
+        # print("asdadasdasd")
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        a=body["coordinates"]  
+        b=body["topic"]  
+        c=int(body["count"])  
+        d=body["result_type"]  
+        e=body["until_date"] 
+        
+        df5 = pd.DataFrame(columns=["Date","User","IsVerified","Tweet","Likes","RT",'User_location'])
+      
+        getTweetFromData(a,b,c,d,e,df5)
+        
+        if df5.empty:
+            return JsonResponse({"message":"no data returned from twitter"})
+        live_dataset = df5.copy()
+        live_dataset['clean_tweet'] = live_dataset['Tweet'].apply(lambda x : clean_tweet(x))
+        live_dataset["Sentiment"] = live_dataset['clean_tweet'].apply(lambda x : analyze_sentiment(x))
+    
+        ppp= live_dataset["Sentiment"].value_counts()
+        print(ppp[-1])
+        print(ppp[0])
+        print(ppp[1])
+        
+        mod = ModelPredictions(pred_type="twitter",positive_count=ppp[1],negetive_count=ppp[-1],neutral_count=ppp[0],total_result=len(live_dataset["Sentiment"])
+        ,query_String=b,location_cordinate=a,query_time=e)
+        mod.save()
+        tokenized_tweet=live_dataset['clean_tweet'].str.replace("[^a-zA-Z#]", " ")
+        
+        tokenized_tweet = live_dataset['clean_tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+        for i in range(len(tokenized_tweet)):
+            tokenized_tweet[i] = ''.join(tokenized_tweet[i])
+        tokenized_tweet= tokenized_tweet.apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
+        yyy=tokenized_tweet
+        
+        xxx= yyy.str.split(expand=True).stack().value_counts()
+
+        return JsonResponse({"data":{"date":df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),
+        "IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist()
+        ,"label":live_dataset["Sentiment"].to_list(),"wordCounts":xxx.to_dict()
+        }})

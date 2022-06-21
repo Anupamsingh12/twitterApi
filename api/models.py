@@ -12,6 +12,7 @@ class ModelPredictions(models.Model):
     
     pred_type=models.TextField(max_length=100,blank=True)  #twitter , news
     time=models.DateTimeField(auto_now=True)         # time (when you hit the query..)
+    query_time=models.DateTimeField(auto_now=False)         # time (when you hit the query..)
     positive_count = models.TextField(max_length=5)  # count of positive pred
     negetive_count = models.TextField(max_length=5)   # count of negetive pred
     neutral_count = models.TextField(max_length=5)   # count of neutral pred

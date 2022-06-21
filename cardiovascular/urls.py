@@ -9,7 +9,8 @@ from django.contrib import admin
 urlpatterns = [
     path('',views.index,name='api Documentation'),
 
-    path('api/v2/twitter/sentiment', views.cardiorisk2),
+    # path('api/v2/twitter/sentiment', views.cardiorisk2),
+    path('api/v2/twitter/sentiment', views.twitterSentiment),
     path('api/v2/news/sentiment', views.newsAnanlyserView),
     path('api/v2/all/stats', views.allStats),
     path('admin/', admin.site.urls),
