@@ -419,9 +419,9 @@ def analyze_sentiment(tweet):
         return 0
     else:
         return -1
-def analyze_sentiment2(tweet):
-    analysis = cl.classify(tweet)
-    return analysis
+# def analyze_sentiment2(tweet):
+#     analysis = cl.classify(tweet)
+#     return analysis
 
 
 @api_view(['POST'])
@@ -440,16 +440,21 @@ def twitterSentiment(request):
         e=body["until_date"] 
         
         df5 = pd.DataFrame(columns=["Date","User","IsVerified","Tweet","Likes","RT",'User_location'])
+
+        
       
         getTweetFromData(a,b,c,d,e,df5)
-        
+        if len(df5)<100:
+            return JsonResponse({"message":"not enough data returned from twitter try to increse the range"})
+        print(df5)
         if df5.empty:
-            return JsonResponse({"message":"no data returned from twitter"})
+            return JsonResponse({"message":"not enough data returned from twitter try to increse the range"})
         live_dataset = df5.copy()
         live_dataset['clean_tweet'] = live_dataset['Tweet'].apply(lambda x : clean_tweet(x))
         live_dataset["Sentiment"] = live_dataset['clean_tweet'].apply(lambda x : analyze_sentiment(x))
-    
+        print(live_dataset["Sentiment"])
         ppp= live_dataset["Sentiment"].value_counts()
+        print(ppp)
         print(ppp[-1])
         print(ppp[0])
         print(ppp[1])
