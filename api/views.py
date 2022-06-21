@@ -469,8 +469,8 @@ def twitterSentiment(request):
 
         return JsonResponse({"data":{"date":df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),
         "IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist()
-        ,"label":live_dataset["Sentiment"].to_list(),"wordCounts":xxx.to_dict()
-        }})
+        ,"label":live_dataset["Sentiment"].to_list()
+        },"wordCounts":xxx.to_dict()})
 
 from textblob.classifiers import NaiveBayesClassifier
 df=pd.read_csv('api/train.csv')
