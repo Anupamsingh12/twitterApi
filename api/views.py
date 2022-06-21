@@ -33,6 +33,21 @@ from nltk import PorterStemmer
 import json
 import requests
 
+
+
+def clean_tweet(tweet):
+    return ' '.join(re.sub('(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|([RT])', ' ', str(tweet).lower()).split())
+
+from textblob.classifiers import NaiveBayesClassifier
+df=pd.read_csv('api/train.csv')
+df['tweet'] = df['tweet'].apply(lambda x : clean_tweet(x))
+df['tweet']= df['tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+df['tweet']=df['tweet'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>2]))
+mast_df=df[['tweet','label']].copy()
+mast_df=list(zip(df['tweet'], df['label']))
+first2k = mast_df[0:2000]
+cl = NaiveBayesClassifier(first2k)
+print("====================== model trainned cl =============================")
 ps = PorterStemmer()
 
 def index(request):
@@ -212,7 +227,9 @@ def cardiorisk2(request):
 
 
         # return JsonResponse({"data":df5.to_json()})
-        return JsonResponse({"data":{'date':df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),"IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist(),"label":df5['label'].values.tolist()},"wordCounts":xxx.to_dict()})
+        return JsonResponse({"data":{'date':df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),
+        "IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist(),
+        "label":df5['label'].values.tolist()},"wordCounts":xxx.to_dict()})
     #     p=JSONParser().parse(request)
        
     #     x=[]
@@ -392,8 +409,6 @@ def allStats(request):
     
 
 
-def clean_tweet(tweet):
-    return ' '.join(re.sub('(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|([RT])', ' ', str(tweet).lower()).split())
 
 from textblob import TextBlob
 def analyze_sentiment(tweet):
@@ -404,6 +419,9 @@ def analyze_sentiment(tweet):
         return 0
     else:
         return -1
+def analyze_sentiment2(tweet):
+    analysis = cl.classify(tweet)
+    return analysis
 
 
 @api_view(['POST'])
@@ -429,7 +447,7 @@ def twitterSentiment(request):
             return JsonResponse({"message":"no data returned from twitter"})
         live_dataset = df5.copy()
         live_dataset['clean_tweet'] = live_dataset['Tweet'].apply(lambda x : clean_tweet(x))
-        live_dataset["Sentiment"] = live_dataset['clean_tweet'].apply(lambda x : analyze_sentiment(x))
+        live_dataset["Sentiment"] = live_dataset['clean_tweet'].apply(lambda x : analyze_sentiment2(x))
     
         ppp= live_dataset["Sentiment"].value_counts()
         print(ppp[-1])
@@ -453,3 +471,17 @@ def twitterSentiment(request):
         "IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist()
         ,"label":live_dataset["Sentiment"].to_list(),"wordCounts":xxx.to_dict()
         }})
+
+from textblob.classifiers import NaiveBayesClassifier
+df=pd.read_csv('api/train.csv')
+df['tweet'] = df['tweet'].apply(lambda x : clean_tweet(x))
+df['tweet']= df['tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+df['tweet']=df['tweet'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>2]))
+mast_df=df[['tweet','label']].copy()
+mast_df=list(zip(df['tweet'], df['label']))
+first2k = mast_df[0:2000]
+cl = NaiveBayesClassifier(first2k)
+
+
+
+
