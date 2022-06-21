@@ -472,15 +472,15 @@ def twitterSentiment(request):
         ,"label":live_dataset["Sentiment"].to_list()
         },"wordCounts":xxx.to_dict()})
 
-from textblob.classifiers import NaiveBayesClassifier
-df=pd.read_csv('api/train.csv')
-df['tweet'] = df['tweet'].apply(lambda x : clean_tweet(x))
-df['tweet']= df['tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
-df['tweet']=df['tweet'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>2]))
-mast_df=df[['tweet','label']].copy()
-mast_df=list(zip(df['tweet'], df['label']))
-first2k = mast_df[0:2000]
-cl = NaiveBayesClassifier(first2k)
+# from textblob.classifiers import NaiveBayesClassifier
+# df=pd.read_csv('api/train.csv')
+# df['tweet'] = df['tweet'].apply(lambda x : clean_tweet(x))
+# df['tweet']= df['tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+# df['tweet']=df['tweet'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>2]))
+# mast_df=df[['tweet','label']].copy()
+# mast_df=list(zip(df['tweet'], df['label']))
+# first2k = mast_df[0:2000]
+# cl = NaiveBayesClassifier(first2k)
 
 
 
