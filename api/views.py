@@ -307,11 +307,12 @@ def newsAnanlyserView(request):
         if not response_headline.status_code == 200:
             return JsonResponse({"message":"you have exhausted your daily limit.","status_from_news":response_headline.status_code})
         response_json_headline = response_headline.json()
+        print(response_json_headline)
         responses = response_json_headline["articles"]
         # transforming the data from JSON dictionary to a pandas data frame
         news_articles_df = pd.DataFrame(get_articles(responses))
         # printing the head to check the format and the working of the get_articles function
-        news_articles_df.head()
+        print(news_articles_df.head())
         news_articles_df['pub_date'] = pd.to_datetime(news_articles_df['pub_date']).apply(lambda x: x.date())
         news_articles_df.dropna(inplace=True)
         news_articles_df = news_articles_df[~news_articles_df['description'].isnull()]
@@ -347,9 +348,10 @@ def newsAnanlyserView(request):
             print(count[1])
             print(count[0])
             mod = newsModelPredictions(pred_type="news",positive_count=count[1],negetive_count=count[-1],neutral_count=count[0],total_result=len(test_pred_int)
-            ,query_String=b)
+            ,query_String=b,source = domain)
             mod.save()
         except ValueError as ve:
+            print("oooops ====== exception ========= occured")
             return JsonResponse({"message":"count of words in dataset is not more than 100."})
         return JsonResponse({"source":news_articles_df['source'].values.tolist(),"pub_date":news_articles_df['pub_date'].values.tolist()
         ,"url":news_articles_df['url'].values.tolist(),"label":json.dumps(test_pred_int.tolist()),"wordCounts":xxx.to_dict()})
@@ -468,6 +470,7 @@ def twitterSentiment(request):
         for i in range(len(tokenized_tweet)):
             tokenized_tweet[i] = ''.join(tokenized_tweet[i])
         tokenized_tweet= tokenized_tweet.apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
+        tokenized_tweet=  tokenized_tweet.str.replace('\d+', '')
         yyy=tokenized_tweet
         
         xxx= yyy.str.split(expand=True).stack().value_counts()

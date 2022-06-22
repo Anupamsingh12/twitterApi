@@ -35,7 +35,7 @@ class newsModelPredictions(models.Model):
     total_result = models.TextField(max_length=5)   # count of total rows.
     query_String = models.TextField(max_length=50)   # count of total rows.
     # location_cordinate = models.TextField(max_length=100)   # location co-ordinate (actual coordinate)
-    source = models.TextField(max_length=100)   # location String (new delhi,kashmeer)
+    source = models.TextField(max_length=100)   # (source of news)
     
 
     

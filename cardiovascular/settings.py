@@ -79,6 +79,8 @@ WSGI_APPLICATION = 'cardiovascular.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+CSRF_TRUSTED_ORIGINS = ['https://mytwittermodel.herokuapp.com']
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
