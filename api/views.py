@@ -286,7 +286,10 @@ def newsAnanlyserView(request):
         c=int(body["count"])  
         d=body["result_type"]  
         e=body["until_date"] 
-        print(b)
+        # domain=''
+        # domain=body["domain"] 
+        # print(domain)
+        # print(b)
         parameters_headlines = {
         'q': str(b),
         'sortBy':'popularity',
@@ -303,16 +306,16 @@ def newsAnanlyserView(request):
         Log_Reg = pickle.load(open(filename, 'rb'))
 
         response_headline = requests.get(url, params = parameters_headlines)
-        print(response_headline)
+        # print(response_headline)
         if not response_headline.status_code == 200:
             return JsonResponse({"message":"you have exhausted your daily limit.","status_from_news":response_headline.status_code})
         response_json_headline = response_headline.json()
-        print(response_json_headline)
+        # print(response_json_headline)
         responses = response_json_headline["articles"]
         # transforming the data from JSON dictionary to a pandas data frame
         news_articles_df = pd.DataFrame(get_articles(responses))
         # printing the head to check the format and the working of the get_articles function
-        print(news_articles_df.head())
+        # print(news_articles_df.head())
         news_articles_df['pub_date'] = pd.to_datetime(news_articles_df['pub_date']).apply(lambda x: x.date())
         news_articles_df.dropna(inplace=True)
         news_articles_df = news_articles_df[~news_articles_df['description'].isnull()]
@@ -322,10 +325,10 @@ def newsAnanlyserView(request):
         live_dataset['combined_text'] = live_dataset['combined_text'].str.replace("[^a-zA-Z#]", " ")
         live_dataset['combined_text'] = live_dataset['combined_text'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
         # live_dataset['combined_text'] = np.vectorize(remove_pattern)(live_dataset['combined_text'], "@[\w]*")
-        print(live_dataset['combined_text'])
+        # print(live_dataset['combined_text'])
         
         xxx= live_dataset['combined_text'].str.split(expand=True).stack().value_counts()
-        print(xxx)
+        # print(xxx)
         tokenized_tweet1 = live_dataset['combined_text']
         live_dataset['combined_text'] = tokenized_tweet1.str.replace("[^a-zA-Z#]", " ")
         live_dataset_prepare = live_dataset['combined_text']
@@ -337,9 +340,9 @@ def newsAnanlyserView(request):
                 
             # test_pred_int = prediction_live_tfidf[:,1] >= 0.3
             test_pred_int = prediction_live_tfidf.astype(np.int)
-            print(test_pred_int)
+            # print(test_pred_int)
             live_dataset['label'] = test_pred_int
-            print(test_pred_int)
+            # print(test_pred_int)
             unique, counts = numpy.unique(test_pred_int, return_counts=True)
             count = dict(zip(unique, counts))
             # count = live_dataset['label'].value_counts()
@@ -348,7 +351,7 @@ def newsAnanlyserView(request):
             print(count[1])
             print(count[0])
             mod = newsModelPredictions(pred_type="news",positive_count=count[1],negetive_count=count[-1],neutral_count=count[0],total_result=len(test_pred_int)
-            ,query_String=b,source = domain)
+            ,query_String=b,source = "all")
             mod.save()
         except ValueError as ve:
             print("oooops ====== exception ========= occured")
