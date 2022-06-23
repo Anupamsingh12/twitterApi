@@ -24,7 +24,7 @@ class ModelPredictions(models.Model):
 
     
     def __str__(self):
-        return "{} ".format(self.pred_type,'-',self.time)
+        return "{}-{}-{}".format(self.query_String,self.id,self.time)
 class newsModelPredictions(models.Model):
     
     pred_type=models.TextField(max_length=100,blank=True)  #twitter , news
@@ -40,4 +40,4 @@ class newsModelPredictions(models.Model):
 
     
     def __str__(self):
-        return "{} ".format(self.pred_type,'-',self.time)
+        return "{}-{}-{}".format(self.query_String,self.id,self.time)
