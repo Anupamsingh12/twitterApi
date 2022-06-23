@@ -47,7 +47,7 @@ def clean_tweet(tweet):
 # mast_df=list(zip(df['tweet'], df['label']))
 # first2k = mast_df[0:2000]
 # cl = NaiveBayesClassifier(first2k)
-# print("====================== model trainned cl =============================")
+# #print("====================== model trainned cl =============================")
 # ps = PorterStemmer()
 
 def index(request):
@@ -89,7 +89,7 @@ def get_tweets1(df5,Topic1, Count1, coordinates, result_type, until_date):
     #for tweet in tweepy.Cursor(api.search_tweets, geocode = coordinates, lang = 'en', result_type = result_type, until = until_date, count = 100).items(max_tweets)
     for tweet in tweepy.Cursor(api.search_tweets, q=Topic1, count=Count1, geocode = coordinates, lang = 'en', result_type = result_type, until = until_date).items():
     #for tweet in tweepy.Cursor(api.search_tweets, q=Topic,count=100, lang='en').items():
-        # print(i, end='\r')
+        # #print(i, end='\r')
         df5.loc[i, 'Date']= tweet.created_at
         df5.loc[i, 'User']= tweet.user.name
         df5.loc[i, 'IsVerified']= tweet.user.verified
@@ -105,7 +105,7 @@ def get_tweets1(df5,Topic1, Count1, coordinates, result_type, until_date):
             pass
 
 def getTweetFromData(a,b,c,d,e,df5):
-    # print(df5.head())
+    # #print(df5.head())
     # coordinates = '34.083656,74.797371,150mi'
     # Topic1 = 'militant'
     # Count1 = 150
@@ -135,7 +135,7 @@ def cardiorisk2(request):
     
     if request.method == 'POST':
      
-        # print("asdadasdasd")
+        # #print("asdadasdasd")
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
         a=body["coordinates"]  
@@ -149,11 +149,11 @@ def cardiorisk2(request):
         filename='api/tfidf.sav'
         tfidf = pickle.load(open(filename, 'rb'))
         df5 = pd.DataFrame(columns=["Date","User","IsVerified","Tweet","Likes","RT",'User_location'])
-        print("inside djkfsfaskj")
+        #print("inside djkfsfaskj")
         # filename='api/LogRegModel.sav'  
         filename='api/logisticNew.sav'  
         getTweetFromData(a,b,c,d,e,df5)
-        # print(df5.head())
+        # #print(df5.head())
         if df5.empty:
             return JsonResponse({"message":"no data returned from twitter"})
         live_dataset = df5.copy()
@@ -169,9 +169,9 @@ def cardiorisk2(request):
         live_dataset['Tidy_Tweets'] = tokenized_tweet1
         live_dataset_prepare = live_dataset['Tidy_Tweets']
         # tfidf=TfidfVectorizer(max_df=0.90, min_df=2,max_features=100,stop_words='english')
-        print("------------------------------")
+        #print("------------------------------")
         tfidf_matrix=tfidf.fit_transform(live_dataset['Tidy_Tweets'])
-        print("hjsdddddddddddddddddddddddddddddddd")
+        #print("hjsdddddddddddddddddddddddddddddddd")
         Log_Reg = pickle.load(open(filename, 'rb'))
         try:
             prediction_live_tfidf = Log_Reg.predict_proba(tfidf_matrix)
@@ -215,12 +215,12 @@ def cardiorisk2(request):
         yyy=tokenized_tweet
 
         xxx= yyy.str.split(expand=True).stack().value_counts()
-        # print("=====================================================================================")
-        # print(xxx.to_dict())
+        # #print("=====================================================================================")
+        # #print(xxx.to_dict())
         count = df5['label'].value_counts()
-        print(count[-1])
-        print(count[1])
-        print(count[0])
+        #print(count[-1])
+        #print(count[1])
+        #print(count[0])
         mod = ModelPredictions(pred_type="twitter",positive_count=count[1],negetive_count=count[-1],neutral_count=count[0],total_result=len(df5['label'])
         ,query_String=b,location_cordinate=a)
         mod.save()
@@ -278,7 +278,7 @@ def newsAnanlyserView(request):
 
     if request.method == 'POST':
      
-        # print("asdadasdasd")
+        # #print("asdadasdasd")
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
         # a=body["coordinates"]  
@@ -286,10 +286,8 @@ def newsAnanlyserView(request):
         c=int(body["count"])  
         d=body["result_type"]  
         e=body["until_date"] 
-        # domain=''
-        # domain=body["domain"] 
-        # print(domain)
-        # print(b)
+        domain = "null"
+       
         parameters_headlines = {
         'q': str(b),
         'sortBy':'popularity',
@@ -297,38 +295,56 @@ def newsAnanlyserView(request):
         'apiKey': api_key,
         'language': 'en',
         'from' : e   
-    }
-        print("==============================")
-        print(parameters_headlines)
+         }
+        if 'domain' in body:
+            #print("hell yeah")
+            domain = body["domain"]
+            parameters_headlines = {'domains': str(domain),
+        
+            # 'pageSize': 100,
+            'apiKey': api_key,
+            # 'language': 'en',
+            # 'from' : e   
+            }
+            return JsonResponse({"message":"not enough data found for prediction"})
+        # #print("==============================")
+        # #print(parameters_headlines)
         filename='api/tfidf.sav'
         tfidf = pickle.load(open(filename, 'rb'))
         filename='api/logisticNew2.sav'
         Log_Reg = pickle.load(open(filename, 'rb'))
 
         response_headline = requests.get(url, params = parameters_headlines)
-        # print(response_headline)
+        # #print(response_headline)
         if not response_headline.status_code == 200:
             return JsonResponse({"message":"you have exhausted your daily limit.","status_from_news":response_headline.status_code})
         response_json_headline = response_headline.json()
-        # print(response_json_headline)
+        ##print(response_json_headline)
         responses = response_json_headline["articles"]
+        # ##print(responses)
         # transforming the data from JSON dictionary to a pandas data frame
         news_articles_df = pd.DataFrame(get_articles(responses))
-        # printing the head to check the format and the working of the get_articles function
-        # print(news_articles_df.head())
-        news_articles_df['pub_date'] = pd.to_datetime(news_articles_df['pub_date']).apply(lambda x: x.date())
+        # ##printing the head to check the format and the working of the get_articles function
+        ##print(news_articles_df.head())
+        # for p in news_articles_df.columns:
+        #     #print(p)
+        # #print(news_articles_df['content'])
+        # news_articles_df['pub_date'] = pd.to_datetime(news_articles_df['pub_date']).apply(lambda x: x.date())
         news_articles_df.dropna(inplace=True)
         news_articles_df = news_articles_df[~news_articles_df['description'].isnull()]
         news_articles_df['combined_text'] = news_articles_df['title'].map(str) +" "+ news_articles_df['content'].map(str)
         live_dataset = news_articles_df['combined_text'].copy()
+        #print(live_dataset)
+        #print("-======================sdfsdf==================================")
+        #print(live_dataset)
         live_dataset['combined_text'] = news_articles_df['combined_text'].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
         live_dataset['combined_text'] = live_dataset['combined_text'].str.replace("[^a-zA-Z#]", " ")
         live_dataset['combined_text'] = live_dataset['combined_text'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
         # live_dataset['combined_text'] = np.vectorize(remove_pattern)(live_dataset['combined_text'], "@[\w]*")
-        # print(live_dataset['combined_text'])
+        # #print(live_dataset['combined_text'])
         
         xxx= live_dataset['combined_text'].str.split(expand=True).stack().value_counts()
-        # print(xxx)
+        # #print(xxx)
         tokenized_tweet1 = live_dataset['combined_text']
         live_dataset['combined_text'] = tokenized_tweet1.str.replace("[^a-zA-Z#]", " ")
         live_dataset_prepare = live_dataset['combined_text']
@@ -340,21 +356,21 @@ def newsAnanlyserView(request):
                 
             # test_pred_int = prediction_live_tfidf[:,1] >= 0.3
             test_pred_int = prediction_live_tfidf.astype(np.int)
-            # print(test_pred_int)
+            # #print(test_pred_int)
             live_dataset['label'] = test_pred_int
-            # print(test_pred_int)
+            # #print(test_pred_int)
             unique, counts = numpy.unique(test_pred_int, return_counts=True)
             count = dict(zip(unique, counts))
             # count = live_dataset['label'].value_counts()
-            print(count)
-            print(count[-1])
-            print(count[1])
-            print(count[0])
+            #print(count)
+            #print(count[-1])
+            #print(count[1])
+            #print(count[0])
             mod = newsModelPredictions(pred_type="news",positive_count=count[1],negetive_count=count[-1],neutral_count=count[0],total_result=len(test_pred_int)
             ,query_String=b,source = "all")
             mod.save()
         except ValueError as ve:
-            print("oooops ====== exception ========= occured")
+            #print("oooops ====== exception ========= occured")
             return JsonResponse({"message":"count of words in dataset is not more than 100."})
         return JsonResponse({"source":news_articles_df['source'].values.tolist(),"pub_date":news_articles_df['pub_date'].values.tolist()
         ,"url":news_articles_df['url'].values.tolist(),"label":json.dumps(test_pred_int.tolist()),"wordCounts":xxx.to_dict()})
@@ -369,35 +385,35 @@ def allStats(request):
     location=q.get('location', 'null')
 
     # p=location.split(',')
-    # print(p)
-    print(qq)
-    # print(q['type'].split('?'))
+    # #print(p)
+    #print(qq)
+    # #print(q['type'].split('?'))
     if q['type']== 'twitter':
         if (not qq=='null') and (not fd=='null') and (not td=='null') and (not location=='null'):
-            # print("")
+            # #print("")
             pred = ModelPredictions.objects.filter(query_time__gte = fd,query_time__lte= td,query_String=qq,location_cordinate=location)
             return JsonResponse({'data':list(pred.values())})
         elif (not qq=='null') and (not fd=='null') and (not td=='null'):
-            # print("")
+            # #print("")
             pred = ModelPredictions.objects.filter(query_time__gte = fd,query_time__lte= td,query_String=qq)
             return JsonResponse({'data':list(pred.values())})
         elif (not fd=='null') and (not td=='null'):
-            # print("ttttttttttttttttttt")
+            # #print("ttttttttttttttttttt")
             pred = ModelPredictions.objects.filter(time__gte = fd,time__lte= td)
             return JsonResponse({'data':list(pred.values())})
         elif not qq=='null' :
-            # print("yaha")
+            # #print("yaha")
             pred = ModelPredictions.objects.filter(query_String=qq)
             return JsonResponse({'data':list(pred.values())})
         elif not location=='null' :
-            # print("yaha")
+            # #print("yaha")
             pred = ModelPredictions.objects.filter(location_cordinate=location)
             return JsonResponse({'data':list(pred.values())})
         
         
         
         else:
-            print("yahahaaa")
+            #print("yahahaaa")
             pred=ModelPredictions.objects.all()
             return JsonResponse({'data':list(pred.values())})
     elif  q['type']== 'news':
@@ -435,7 +451,7 @@ def twitterSentiment(request):
     
     if request.method == 'POST':
      
-        # print("asdadasdasd")
+        # #print("asdadasdasd")
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
         a=body["coordinates"]  
@@ -451,18 +467,24 @@ def twitterSentiment(request):
         getTweetFromData(a,b,c,d,e,df5)
         if len(df5)<100:
             return JsonResponse({"message":"not enough data returned from twitter try to increse the range"})
-        print(df5)
+        #print(df5)
         if df5.empty:
             return JsonResponse({"message":"not enough data returned from twitter try to increse the range"})
         live_dataset = df5.copy()
         live_dataset['clean_tweet'] = live_dataset['Tweet'].apply(lambda x : clean_tweet(x))
+        # #print(live_dataset['clean_tweet'])
         live_dataset["Sentiment"] = live_dataset['clean_tweet'].apply(lambda x : analyze_sentiment(x))
-        print(live_dataset["Sentiment"])
+        df5['sentiment']=live_dataset["Sentiment"]
+        # #print(df5.head())
+
+        
+
+        # #print(live_dataset["Sentiment"])
         ppp= live_dataset["Sentiment"].value_counts()
-        print(ppp)
-        print(ppp[-1])
-        print(ppp[0])
-        print(ppp[1])
+        # #print(ppp)
+        #print(ppp[-1])
+        #print(ppp[0])
+        #print(ppp[1])
         
         mod = ModelPredictions(pred_type="twitter",positive_count=ppp[1],negetive_count=ppp[-1],neutral_count=ppp[0],total_result=len(live_dataset["Sentiment"])
         ,query_String=b,location_cordinate=a,query_time=e)
@@ -477,6 +499,10 @@ def twitterSentiment(request):
         yyy=tokenized_tweet
         
         xxx= yyy.str.split(expand=True).stack().value_counts()
+        # for data in live_dataset.columns:
+            # #print(data)
+        live_dataset =live_dataset.drop(['Date', 'User','IsVerified','Likes','RT',"User_location","Tweet"], axis = 1)
+        live_dataset.to_csv('api/output.csv', mode='a', index=False, header=False)
 
         return JsonResponse({"data":{"date":df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),
         "IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist()
@@ -493,6 +519,13 @@ def twitterSentiment(request):
 # first2k = mast_df[0:2000]
 # cl = NaiveBayesClassifier(first2k)
 
-
-
+from django.http import HttpResponse
+import csv
+@api_view(['GET'])
+def save_file(request):
+    data = open(os.path.join('api/output.csv'),'r',encoding="utf8").read()
+ 
+    resp = HttpResponse(data, content_type ='text/csv', headers={'Content-Disposition': 'attachment; filename="output.csv"'})
+   
+    return resp
 
