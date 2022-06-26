@@ -36,4 +36,4 @@ whitenoise==6.0.0
 gunicorn==19.0.0
 textblob==0.17.1
 bs4==4.6.3
-lxml==4.9.0
+lxml==4.11.1
