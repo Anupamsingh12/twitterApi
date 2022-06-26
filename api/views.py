@@ -529,3 +529,25 @@ def save_file(request):
    
     return resp
 
+
+import bs4
+
+from bs4 import BeautifulSoup as soup
+from urllib.request import urlopen
+@api_view(['GET'])
+def getTrendingNews(request):
+    news_url="https://news.google.com/news/rss"
+    Client=urlopen(news_url)
+    xml_page=Client.read()
+    Client.close()
+    #    print(xml_page)
+    soup_page=soup(xml_page,"xml")
+    news_list=soup_page.findAll("item")
+    # Print news title, url and publish date
+    lst=[]
+
+    for news in news_list:
+        dic={'publishDate':news.pubDate.text,'newsText':news.title.text}
+        lst.append(dic)
+    return JsonResponse({'data':lst})
+
