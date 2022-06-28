@@ -278,10 +278,10 @@ def newsAnanlyserView(request):
 
     if request.method == 'POST':
      
-        # #print("asdadasdasd")
+      
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
-        # a=body["coordinates"]  
+       
         b=body["topic"]  
         c=int(body["count"])  
         d=body["result_type"]  
@@ -297,83 +297,74 @@ def newsAnanlyserView(request):
         'from' : e   
          }
         if 'domain' in body:
-            #print("hell yeah")
+            
             domain = body["domain"]
             parameters_headlines = {'domains': str(domain),
         
-            # 'pageSize': 100,
+            'pageSize': 100,
             'apiKey': api_key,
-            # 'language': 'en',
-            # 'from' : e   
+            'language': 'en',
+            
+            'q':str(b)   
             }
-            return JsonResponse({"message":"not enough data found for prediction"})
-        # #print("==============================")
-        # #print(parameters_headlines)
-        filename='api/tfidf.sav'
-        tfidf = pickle.load(open(filename, 'rb'))
-        filename='api/logisticNew2.sav'
-        Log_Reg = pickle.load(open(filename, 'rb'))
+          
+       
+        print(parameters_headlines)
+       
 
         response_headline = requests.get(url, params = parameters_headlines)
-        # #print(response_headline)
+        print(response_headline)
         if not response_headline.status_code == 200:
             return JsonResponse({"message":"you have exhausted your daily limit.","status_from_news":response_headline.status_code})
+        # if response_headline.total_result==0:
+        #     return JsonResponse("dfsdfsdfsdf")
         response_json_headline = response_headline.json()
-        ##print(response_json_headline)
+        print(response_json_headline)
+        print("============================")
         responses = response_json_headline["articles"]
-        # ##print(responses)
-        # transforming the data from JSON dictionary to a pandas data frame
+        if not int(response_json_headline['totalResults']) > 6:
+            return JsonResponse({"message":"not enough result from news api"})
+
         news_articles_df = pd.DataFrame(get_articles(responses))
-        # ##printing the head to check the format and the working of the get_articles function
-        ##print(news_articles_df.head())
-        # for p in news_articles_df.columns:
-        #     #print(p)
-        # #print(news_articles_df['content'])
-        # news_articles_df['pub_date'] = pd.to_datetime(news_articles_df['pub_date']).apply(lambda x: x.date())
+ 
         news_articles_df.dropna(inplace=True)
         news_articles_df = news_articles_df[~news_articles_df['description'].isnull()]
         news_articles_df['combined_text'] = news_articles_df['title'].map(str) +" "+ news_articles_df['content'].map(str)
         live_dataset = news_articles_df['combined_text'].copy()
-        #print(live_dataset)
-        #print("-======================sdfsdf==================================")
-        #print(live_dataset)
         live_dataset['combined_text'] = news_articles_df['combined_text'].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
         live_dataset['combined_text'] = live_dataset['combined_text'].str.replace("[^a-zA-Z#]", " ")
         live_dataset['combined_text'] = live_dataset['combined_text'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
-        # live_dataset['combined_text'] = np.vectorize(remove_pattern)(live_dataset['combined_text'], "@[\w]*")
-        # #print(live_dataset['combined_text'])
-        
         xxx= live_dataset['combined_text'].str.split(expand=True).stack().value_counts()
-        # #print(xxx)
+       
         tokenized_tweet1 = live_dataset['combined_text']
         live_dataset['combined_text'] = tokenized_tweet1.str.replace("[^a-zA-Z#]", " ")
         live_dataset_prepare = live_dataset['combined_text']
         
-        tfidf_matrix=tfidf.fit_transform(tokenized_tweet1)
+        
         live_dataset['label']=[]
         try:
-            prediction_live_tfidf = Log_Reg.predict(tfidf_matrix)
-                
-            # test_pred_int = prediction_live_tfidf[:,1] >= 0.3
-            test_pred_int = prediction_live_tfidf.astype(np.int)
-            # #print(test_pred_int)
-            live_dataset['label'] = test_pred_int
-            # #print(test_pred_int)
-            unique, counts = numpy.unique(test_pred_int, return_counts=True)
-            count = dict(zip(unique, counts))
-            # count = live_dataset['label'].value_counts()
-            #print(count)
-            #print(count[-1])
-            #print(count[1])
-            #print(count[0])
-            mod = newsModelPredictions(pred_type="news",positive_count=count[1],negetive_count=count[-1],neutral_count=count[0],total_result=len(test_pred_int)
+       
+            live_dataset["label"] = live_dataset_prepare.apply(lambda x : analyze_sentiment(x))
+         
+            print(live_dataset["label"])
+            count= live_dataset["label"].value_counts()
+            print("======================================")
+            print(count.keys())
+            if 0 not in count.keys():
+                count[0]=0
+            if 1 not in count.keys():
+                count[1]=0
+            if -1 not in count.keys():
+                count[-1]=0
+            print(type(count))
+            mod = newsModelPredictions(pred_type="news",positive_count=count[1],negetive_count=count[-1],neutral_count=count[0],total_result=len(live_dataset["label"])
             ,query_String=b,source = "all")
             mod.save()
         except ValueError as ve:
-            #print("oooops ====== exception ========= occured")
+           
             return JsonResponse({"message":"count of words in dataset is not more than 100."})
         return JsonResponse({"source":news_articles_df['source'].values.tolist(),"pub_date":news_articles_df['pub_date'].values.tolist()
-        ,"url":news_articles_df['url'].values.tolist(),"label":json.dumps(test_pred_int.tolist()),"wordCounts":xxx.to_dict()})
+        ,"url":news_articles_df['url'].values.tolist(),"label":live_dataset["label"].values.tolist(),"wordCounts":xxx.to_dict()})
 
 
 @api_view(['GET'])
@@ -384,10 +375,7 @@ def allStats(request):
     td=q.get('to_date', 'null')
     location=q.get('location', 'null')
 
-    # p=location.split(',')
-    # #print(p)
-    #print(qq)
-    # #print(q['type'].split('?'))
+    
     if q['type']== 'twitter':
         if (not qq=='null') and (not fd=='null') and (not td=='null') and (not location=='null'):
             # #print("")
