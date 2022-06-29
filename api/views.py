@@ -539,3 +539,37 @@ def getTrendingNews(request):
         lst.append(dic)
     return JsonResponse({'data':lst})
 
+@api_view(['GET'])
+def getTrendingTweets(request):
+    consumer_key = "HgEwalkiOGT4GHwRr9dqCa7UU"
+    consumer_secret = "zASPPh2IGxN8hqTMxSnAkGQtMSpHUoL7qR8GFcQCPJ8HEXUFAJ"
+    access_token = "1466028468005703680-fs47RLAsOeWrkqN4TQapR8GZwnKhiX"
+    access_token_secret = "3cogqCkPSffIgtn6vfjcVaVZufcE8XvsyxO28NWqeKpsh"
+
+    # authorization of consumer key and consumer secret
+    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+
+    # set access to user's access key and access secret
+    auth.set_access_token(access_token, access_token_secret)
+
+    # calling the api
+    api = tweepy.API(auth)
+
+    # WOEID of London
+    woeid = 23424848
+
+    # fetching the trends
+    trends = api.get_place_trends(id = woeid)
+
+    # printing the information
+    print("The top trends for the location are :")
+    i=1
+    lst=[]
+    for value in trends:
+        for trend in value['trends']:
+            pp={'id':i,'name':trend['name']}
+            print(trend['name'])
+            lst.append(pp)
+            i=i+1
+    return JsonResponse({'data':lst})
+
