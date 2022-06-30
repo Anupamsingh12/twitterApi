@@ -322,7 +322,7 @@ def newsAnanlyserView(request):
         print(response_json_headline)
         print("============================")
         responses = response_json_headline["articles"]
-        if not int(response_json_headline['totalResults']) > 6:
+        if not int(response_json_headline['totalResults']) > 2:
             return JsonResponse({"message":"not enough result from news api"})
 
         news_articles_df = pd.DataFrame(get_articles(responses))
