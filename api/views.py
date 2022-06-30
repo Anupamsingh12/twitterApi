@@ -297,21 +297,13 @@ def newsAnanlyserView(request):
         'from' : e   
          }
         if 'domain' in body:
-            
+            parameters_headlines=''
             domain = body["domain"]
-            parameters_headlines = {'domains': str(domain),
-        
-            'pageSize': 100,
-            'apiKey': api_key,
-            'language': 'en',
-            
-            'q':str(b)   
-            }
+            url="https://newsapi.org/v2/everything?apiKey=f84317925d46427ab3903575e1d2260d&q{}&domains={}".format(str(b),domain)
           
        
         print(parameters_headlines)
-       
-
+               
         response_headline = requests.get(url, params = parameters_headlines)
         print(response_headline)
         if not response_headline.status_code == 200:
@@ -332,6 +324,7 @@ def newsAnanlyserView(request):
         news_articles_df['combined_text'] = news_articles_df['title'].map(str) +" "+ news_articles_df['content'].map(str)
         live_dataset = news_articles_df['combined_text'].copy()
         live_dataset['combined_text'] = news_articles_df['combined_text'].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
+        # live_dataset['combined_text']=live_dataset['combined_text'].apply(lambda x: [item for item in x if item not in stop])
         live_dataset['combined_text'] = live_dataset['combined_text'].str.replace("[^a-zA-Z#]", " ")
         live_dataset['combined_text'] = live_dataset['combined_text'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
         xxx= live_dataset['combined_text'].str.split(expand=True).stack().value_counts()
@@ -524,7 +517,7 @@ from bs4 import BeautifulSoup as soup
 from urllib.request import urlopen
 @api_view(['GET'])
 def getTrendingNews(request):
-    news_url="https://news.google.com/news/rss"
+    news_url="https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en"
     Client=urlopen(news_url)
     xml_page=Client.read()
     Client.close()
