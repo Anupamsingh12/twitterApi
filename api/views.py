@@ -299,10 +299,10 @@ def newsAnanlyserView(request):
         if 'domain' in body:
             parameters_headlines=''
             domain = body["domain"]
-            url="https://newsapi.org/v2/everything?apiKey=f84317925d46427ab3903575e1d2260d&q{}&domains={}".format(str(b),domain)
+            url="https://newsapi.org/v2/everything?apiKey=f84317925d46427ab3903575e1d2260d&q={}&domains={}".format(str(b),domain.lower())
           
        
-        print(parameters_headlines)
+        print(url)
                
         response_headline = requests.get(url, params = parameters_headlines)
         print(response_headline)
@@ -311,7 +311,7 @@ def newsAnanlyserView(request):
         # if response_headline.total_result==0:
         #     return JsonResponse("dfsdfsdfsdf")
         response_json_headline = response_headline.json()
-        print(response_json_headline)
+        # print(response_json_headline)
         print("============================")
         responses = response_json_headline["articles"]
         if not int(response_json_headline['totalResults']) > 2:
@@ -339,7 +339,7 @@ def newsAnanlyserView(request):
        
             live_dataset["label"] = live_dataset_prepare.apply(lambda x : analyze_sentiment(x))
          
-            print(live_dataset["label"])
+            # print(live_dataset["label"])
             count= live_dataset["label"].value_counts()
             print("======================================")
             print(count.keys())
@@ -349,7 +349,7 @@ def newsAnanlyserView(request):
                 count[1]=0
             if -1 not in count.keys():
                 count[-1]=0
-            print(type(count))
+            # print(type(count))
             mod = newsModelPredictions(pred_type="news",positive_count=count[1],negetive_count=count[-1],neutral_count=count[0],total_result=len(live_dataset["label"])
             ,query_String=b,source = "all")
             mod.save()
