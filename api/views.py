@@ -501,12 +501,16 @@ def twitterSentiment(request):
 # cl = NaiveBayesClassifier(first2k)
 
 from django.http import HttpResponse
+from datetime import datetime
+
 import csv
 @api_view(['GET'])
 def save_file(request):
+    date=datetime.today()
+    filename="output-{}.csv".format(date)
     data = open(os.path.join('api/output.csv'),'r',encoding="utf8").read()
  
-    resp = HttpResponse(data, content_type ='text/csv', headers={'Content-Disposition': 'attachment; filename="output.csv"'})
+    resp = HttpResponse(data, content_type ='text/csv', headers={'Content-Disposition': 'attachment; filename={}'.format(filename)})
    
     return resp
 
