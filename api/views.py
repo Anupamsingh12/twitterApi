@@ -299,7 +299,7 @@ def newsAnanlyserView(request):
         if 'domain' in body:
             parameters_headlines=''
             domain = body["domain"]
-            url="https://newsapi.org/v2/everything?apiKey=f84317925d46427ab3903575e1d2260d&q={}&domains={}".format(str(b),domain.lower())
+            url="https://newsapi.org/v2/everything?apiKey=f84317925d46427ab3903575e1d2260d&q={}&domains={}&to={}".format(str(b),domain.lower(),e)
           
        
         print(url)
