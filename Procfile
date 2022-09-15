@@ -1,1 +1,1 @@
-web: gunicorn cardiovascular.wsgi --log-file -
+web: gunicorn twitterApi.wsgi --log-file -
