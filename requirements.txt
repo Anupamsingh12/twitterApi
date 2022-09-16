@@ -37,6 +37,3 @@ gunicorn==19.0.0
 textblob==0.17.1
 bs4
 lxml
-keras
-Keras-Preprocessing
-tensorflow
