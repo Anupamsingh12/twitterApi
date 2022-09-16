@@ -39,3 +39,4 @@ bs4
 lxml
 keras==2.7.0
 Keras-Preprocessing==1.1.2
+tensorflow==2.7.3
