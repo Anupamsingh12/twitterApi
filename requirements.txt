@@ -37,6 +37,6 @@ gunicorn==19.0.0
 textblob==0.17.1
 bs4
 lxml
-keras==2.7.0
-Keras-Preprocessing==1.1.2
+keras
+Keras-Preprocessing
 tensorflow
