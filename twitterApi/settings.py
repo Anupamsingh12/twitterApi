@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'twitterApi.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-CSRF_TRUSTED_ORIGINS = ['https://mytwittermodel.herokuapp.com','43.204.23.203']
+CSRF_TRUSTED_ORIGINS = ['https://mytwittermodel.herokuapp.com']
 
 DATABASES = {
     'default': {
