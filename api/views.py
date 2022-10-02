@@ -580,10 +580,10 @@ def getTrendingTweets(request):
 # # for new model....=========================================
   
 
-# from keras.models import load_model
+from keras.models import load_model
 
 # Load model
-# model = load_model('api/rnn_model/best_model.h5')
+model = load_model('api/rnn_model/best_model.h5')
 
 max_words = 5000
 max_len=50
