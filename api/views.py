@@ -606,7 +606,7 @@ def tweet_to_words(tweet):
 
 
 from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
+from keras_preprocessing.sequence import pad_sequences
 
 
 def predict_class(text):
