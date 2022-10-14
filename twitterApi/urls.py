@@ -10,11 +10,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('',views.index,name='api Documentation'),
 
-    # path('api/v2/twitter/sentiment', views.cardiorisk2),
-    path('api/v2/twitter/sentiment', views.twitterSentiment),
-    # path('api/v2/twitter/sentiment/2', views.twitterSentiment2),
     path('api/v2/twitter/sentiment/new', views.twitterSentimentNew),
-    path('api/v2/news/sentiment', views.newsAnanlyserView),
     path('api/v2/news/sentiment/new', views.newsAnanlyserViewNew),
     path('api/v2/all/stats', views.allStats),
     path('api/v2/news/trending', views.getTrendingNews),

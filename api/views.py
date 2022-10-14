@@ -51,37 +51,8 @@ def clean_tweet(tweet):
 # ps = PorterStemmer()
 
 def index(request):
-    return render(request,'index.html')
+    return HttpResponse("yey site is working fine")
 
-
-st={ "age": "12","gender": "0",
-"height": "168",
-"weight": "72",
-"ap_hi": "156",
-"ap_low": "50",
-"cholesterol": "1",
-"gluc": "3",
-"smoke": "0",
-"alco": "1",
-"active": "1" }
-
-@api_view(['GET', 'POST'])
-def cardiorisk(request):
-   
-    if request.method == 'POST':
-        filename='api/finalized_model2.sav'  
-        loaded_model = pickle.load(open(filename, 'rb'))
-        p=JSONParser().parse(request)
-        
-        x=[]
-        for a in p:
-            x.append(int(p[a]))
-        aa=np.array([x])
-        aa.reshape(-1,1)
-        xx=loaded_model.predict_proba(aa)
-        return Response({"message": "cardio risk", "data": xx})
-       
-    return Response({"message": "please send data in format ",'data':st})
 
 def get_tweets1(df5,Topic1, Count1, coordinates, result_type, until_date):
     i=0
@@ -129,118 +100,8 @@ def remove_pattern(text,pattern):
         text = re.sub(i,"",text)
     
     return text
-@api_view(['GET', 'POST'])
-def cardiorisk2(request):
-    
-    
-    if request.method == 'POST':
-     
-        # #print("asdadasdasd")
-        body_unicode = request.body.decode('utf-8')
-        body = json.loads(body_unicode)
-        a=body["coordinates"]  
-        b=body["topic"]  
-        c=int(body["count"])  
-        d=body["result_type"]  
-        e=body["until_date"] 
-        
 
 
-        filename='api/tfidf.sav'
-        tfidf = pickle.load(open(filename, 'rb'))
-        df5 = pd.DataFrame(columns=["Date","User","IsVerified","Tweet","Likes","RT",'User_location'])
-        #print("inside djkfsfaskj")
-        # filename='api/LogRegModel.sav'  
-        filename='api/logisticNew.sav'  
-        getTweetFromData(a,b,c,d,e,df5)
-        # #print(df5.head())
-        if df5.empty:
-            return JsonResponse({"message":"no data returned from twitter"})
-        live_dataset = df5.copy()
-        live_dataset['Tidy_Tweets'] = np.vectorize(remove_pattern)(live_dataset['Tweet'], "@[\w]*")
-        live_dataset['Tidy_Tweets'] = live_dataset['Tidy_Tweets'].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
-        live_dataset['Tidy_Tweets'] = live_dataset['Tidy_Tweets'].str.replace("[^a-zA-Z#]", " ")
-        
-        live_dataset['Tidy_Tweets'] = live_dataset['Tidy_Tweets'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
-        tokenized_tweet1 = live_dataset['Tidy_Tweets'].apply(lambda x: x.split())
-        tokenized_tweet1 = tokenized_tweet1.apply(lambda x: [ps.stem(i) for i in x])
-        for i in range(len(tokenized_tweet1)):
-            tokenized_tweet1[i] = ' '.join(tokenized_tweet1[i])
-        live_dataset['Tidy_Tweets'] = tokenized_tweet1
-        live_dataset_prepare = live_dataset['Tidy_Tweets']
-        # tfidf=TfidfVectorizer(max_df=0.90, min_df=2,max_features=100,stop_words='english')
-        #print("------------------------------")
-        tfidf_matrix=tfidf.fit_transform(live_dataset['Tidy_Tweets'])
-        #print("hjsdddddddddddddddddddddddddddddddd")
-        Log_Reg = pickle.load(open(filename, 'rb'))
-        try:
-            prediction_live_tfidf = Log_Reg.predict_proba(tfidf_matrix)
-            pred=[]
-            for a1,b2,c in prediction_live_tfidf:
-                pp=-1
-                if a1>0.8:
-                    pp=-1
-                elif c>=0.13:
-                    pp=1
-                elif b2>=0.68:
-                    pp=0
-               
-                pred.append(pp)
-            
-            # test_pred_int = prediction_live_tfidf[:,1] >= 0.3
-            # test_pred_int = prediction_live_tfidf.astype(np.int)
-            test_pred_int = pred
-            
-            
-            df5['label'] = test_pred_int
-        except ValueError as ve:
-            return JsonResponse({"message":"count of words in dataset is not more than 100."})
-
-        # tokenized_tweet = df5['Tweet'].apply(lambda x: x.split())
-        # df5["Tweet"] = df5["Tweet"].str.replace("[^a-zA-Z#]", " ")
-        # df5['Tweet'] = df5["Tweet"].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
-        # tokenized_tweet=df5["Tweet"].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
-        
-        df5["Tweet"]= np.vectorize(remove_pattern)(df5['Tweet'], "@[\w]*")
-        tokenized_tweet= df5["Tweet"].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
-        tokenized_tweet=tokenized_tweet.str.replace("[^a-zA-Z#]", " ")
-        
-        tokenized_tweet=tokenized_tweet.apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
-
-        tokenized_tweet = tokenized_tweet.apply(lambda x: x.split())
-        tokenized_tweet = tokenized_tweet.apply(lambda x: [ps.stem(i) for i in x])
-        tokenized_tweet=tokenized_tweet.apply(lambda x: [item for item in x if item not in stop])
-        for i in range(len(tokenized_tweet)):
-            tokenized_tweet[i] = ' '.join(tokenized_tweet[i])
-        yyy=tokenized_tweet
-
-        xxx= yyy.str.split(expand=True).stack().value_counts()
-        # #print("=====================================================================================")
-        # #print(xxx.to_dict())
-        count = df5['label'].value_counts()
-        #print(count[-1])
-        #print(count[1])
-        #print(count[0])
-        mod = ModelPredictions(pred_type="twitter",positive_count=count[1],negetive_count=count[-1],neutral_count=count[0],total_result=len(df5['label'])
-        ,query_String=b,location_cordinate=a)
-        mod.save()
-
-
-        # return JsonResponse({"data":df5.to_json()})
-        return JsonResponse({"data":{'date':df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),
-        "IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist(),
-        "label":df5['label'].values.tolist()},"wordCounts":xxx.to_dict()})
-    #     p=JSONParser().parse(request)
-       
-    #     x=[]
-    #     for a in p:
-    #         x.append(int(p[a]))
-    #     aa=np.array([x])
-    #     aa.reshape(-1,1)
-    #     xx=loaded_model.predict_proba(aa)
-    #     return Response({"message": "cardio risk", "data": xx})
-       
-    # return Response({"message": "please send data in format ",'data':st})
 
 def get_articles(file): 
     article_results = [] 
@@ -266,98 +127,6 @@ def _removeNonAscii(s):
     return "".join(i for i in s if ord(i)<128)
 
 
-
-@api_view(['GET', 'POST'])
-def newsAnanlyserView(request):
-
-
-    url = 'https://newsapi.org/v2/everything'
-    # api_key = 'ef935e216c3e404c869b01a9a0da76ee'
-    api_key = 'f84317925d46427ab3903575e1d2260d'
-    # api_key = '31fcde72f0bc42f2871df05c681f3117'
-
-    if request.method == 'POST':
-     
-      
-        body_unicode = request.body.decode('utf-8')
-        body = json.loads(body_unicode)
-       
-        b=body["topic"]  
-        c=int(body["count"])  
-        d=body["result_type"]  
-        e=body["until_date"] 
-        domain = "null"
-       
-        parameters_headlines = {
-        'q': str(b),
-        'sortBy':'popularity',
-        'pageSize': 100,
-        'apiKey': api_key,
-        'language': 'en',
-        'from' : e   
-         }
-        if 'domain' in body:
-            parameters_headlines=''
-            domain = body["domain"]
-            url="https://newsapi.org/v2/everything?apiKey=f84317925d46427ab3903575e1d2260d&q={}&domains={}&to={}".format(str(b),domain.lower(),e)
-          
-       
-        print(url)
-               
-        response_headline = requests.get(url, params = parameters_headlines)
-        print(response_headline)
-        if not response_headline.status_code == 200:
-            return JsonResponse({"message":"you have exhausted your daily limit.","status_from_news":response_headline.status_code})
-        # if response_headline.total_result==0:
-        #     return JsonResponse("dfsdfsdfsdf")
-        response_json_headline = response_headline.json()
-        # print(response_json_headline)
-        print("============================")
-        responses = response_json_headline["articles"]
-        if not int(response_json_headline['totalResults']) > 2:
-            return JsonResponse({"message":"not enough result from news api"})
-
-        news_articles_df = pd.DataFrame(get_articles(responses))
- 
-        news_articles_df.dropna(inplace=True)
-        news_articles_df = news_articles_df[~news_articles_df['description'].isnull()]
-        news_articles_df['combined_text'] = news_articles_df['title'].map(str) +" "+ news_articles_df['content'].map(str)
-        live_dataset = news_articles_df['combined_text'].copy()
-        live_dataset['combined_text'] = news_articles_df['combined_text'].apply(lambda x: re.split('https:\/\/.*', str(x))[0])
-        # live_dataset['combined_text']=live_dataset['combined_text'].apply(lambda x: [item for item in x if item not in stop])
-        live_dataset['combined_text'] = live_dataset['combined_text'].str.replace("[^a-zA-Z#]", " ")
-        live_dataset['combined_text'] = live_dataset['combined_text'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
-        xxx= live_dataset['combined_text'].str.split(expand=True).stack().value_counts()
-       
-        tokenized_tweet1 = live_dataset['combined_text']
-        live_dataset['combined_text'] = tokenized_tweet1.str.replace("[^a-zA-Z#]", " ")
-        live_dataset_prepare = live_dataset['combined_text']
-        
-        
-        live_dataset['label']=[]
-        try:
-       
-            live_dataset["label"] = live_dataset_prepare.apply(lambda x : analyze_sentiment(x))
-         
-            # print(live_dataset["label"])
-            count= live_dataset["label"].value_counts()
-            print("======================================")
-            print(count.keys())
-            if 0 not in count.keys():
-                count[0]=0
-            if 1 not in count.keys():
-                count[1]=0
-            if -1 not in count.keys():
-                count[-1]=0
-            # print(type(count))
-            mod = newsModelPredictions(pred_type="news",positive_count=count[1],negetive_count=count[-1],neutral_count=count[0],total_result=len(live_dataset["label"])
-            ,query_String=b,source = "all")
-            mod.save()
-        except ValueError as ve:
-           
-            return JsonResponse({"message":"count of words in dataset is not more than 100."})
-        return JsonResponse({"source":news_articles_df['source'].values.tolist(),"pub_date":news_articles_df['pub_date'].values.tolist()
-        ,"url":news_articles_df['url'].values.tolist(),"label":live_dataset["label"].values.tolist(),"wordCounts":xxx.to_dict()})
 
 
 @api_view(['GET'])
@@ -412,93 +181,93 @@ def allStats(request):
 
 
 
-from textblob import TextBlob
-def analyze_sentiment(tweet):
-    analysis = TextBlob(tweet)
-    if analysis.sentiment.polarity > 0:
-        return 1
-    elif analysis.sentiment.polarity == 0:
-        return 0
-    else:
-        return -1
-# def analyze_sentiment2(tweet):
-#     analysis = cl.classify(tweet)
-#     return analysis
+# from textblob import TextBlob
+# def analyze_sentiment(tweet):
+#     analysis = TextBlob(tweet)
+#     if analysis.sentiment.polarity > 0:
+#         return 1
+#     elif analysis.sentiment.polarity == 0:
+#         return 0
+#     else:
+#         return -1
+# # def analyze_sentiment2(tweet):
+# #     analysis = cl.classify(tweet)
+# #     return analysis
 
 
-@api_view(['POST'])
-def twitterSentiment(request):
+# @api_view(['POST'])
+# def twitterSentiment(request):
     
     
-    if request.method == 'POST':
+#     if request.method == 'POST':
      
-        # #print("asdadasdasd")
-        body_unicode = request.body.decode('utf-8')
-        body = json.loads(body_unicode)
-        a=body["coordinates"]  
-        b=body["topic"]  
-        c=int(body["count"])  
-        d=body["result_type"]  
-        e=body["until_date"] 
+#         # #print("asdadasdasd")
+#         body_unicode = request.body.decode('utf-8')
+#         body = json.loads(body_unicode)
+#         a=body["coordinates"]  
+#         b=body["topic"]  
+#         c=int(body["count"])  
+#         d=body["result_type"]  
+#         e=body["until_date"] 
         
-        df5 = pd.DataFrame(columns=["Date","User","IsVerified","Tweet","Likes","RT",'User_location'])
+#         df5 = pd.DataFrame(columns=["Date","User","IsVerified","Tweet","Likes","RT",'User_location'])
 
         
       
-        getTweetFromData(a,b,c,d,e,df5)
-        if len(df5)<100:
-            return JsonResponse({"message":"not enough data returned from twitter try to increse the range"})
-        #print(df5)
-        if df5.empty:
-            return JsonResponse({"message":"not enough data returned from twitter try to increse the range"})
-        live_dataset = df5.copy()
-        live_dataset['clean_tweet'] = live_dataset['Tweet'].apply(lambda x : clean_tweet(x))
-        # #print(live_dataset['clean_tweet'])
-        live_dataset["Sentiment"] = live_dataset['clean_tweet'].apply(lambda x : analyze_sentiment(x))
-        df5['sentiment']=live_dataset["Sentiment"]
-        # #print(df5.head())
+#         getTweetFromData(a,b,c,d,e,df5)
+#         if len(df5)<100:
+#             return JsonResponse({"message":"not enough data returned from twitter try to increse the range"})
+#         #print(df5)
+#         if df5.empty:
+#             return JsonResponse({"message":"not enough data returned from twitter try to increse the range"})
+#         live_dataset = df5.copy()
+#         live_dataset['clean_tweet'] = live_dataset['Tweet'].apply(lambda x : clean_tweet(x))
+#         # #print(live_dataset['clean_tweet'])
+#         live_dataset["Sentiment"] = live_dataset['clean_tweet'].apply(lambda x : analyze_sentiment(x))
+#         df5['sentiment']=live_dataset["Sentiment"]
+#         # #print(df5.head())
 
         
 
-        # #print(live_dataset["Sentiment"])
-        ppp= live_dataset["Sentiment"].value_counts()
-        # #print(ppp)
-        #print(ppp[-1])
-        #print(ppp[0])
-        #print(ppp[1])
+#         # #print(live_dataset["Sentiment"])
+#         ppp= live_dataset["Sentiment"].value_counts()
+#         # #print(ppp)
+#         #print(ppp[-1])
+#         #print(ppp[0])
+#         #print(ppp[1])
         
-        mod = ModelPredictions(pred_type="twitter",positive_count=ppp[1],negetive_count=ppp[-1],neutral_count=ppp[0],total_result=len(live_dataset["Sentiment"])
-        ,query_String=b,location_cordinate=a,query_time=e)
-        mod.save()
-        tokenized_tweet=live_dataset['clean_tweet'].str.replace("[^a-zA-Z#]", " ")
+#         mod = ModelPredictions(pred_type="twitter",positive_count=ppp[1],negetive_count=ppp[-1],neutral_count=ppp[0],total_result=len(live_dataset["Sentiment"])
+#         ,query_String=b,location_cordinate=a,query_time=e)
+#         mod.save()
+#         tokenized_tweet=live_dataset['clean_tweet'].str.replace("[^a-zA-Z#]", " ")
         
-        tokenized_tweet = live_dataset['clean_tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
-        for i in range(len(tokenized_tweet)):
-            tokenized_tweet[i] = ''.join(tokenized_tweet[i])
-        tokenized_tweet= tokenized_tweet.apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
-        tokenized_tweet=  tokenized_tweet.str.replace('\d+', '')
-        yyy=tokenized_tweet
+#         tokenized_tweet = live_dataset['clean_tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+#         for i in range(len(tokenized_tweet)):
+#             tokenized_tweet[i] = ''.join(tokenized_tweet[i])
+#         tokenized_tweet= tokenized_tweet.apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
+#         tokenized_tweet=  tokenized_tweet.str.replace('\d+', '')
+#         yyy=tokenized_tweet
         
-        xxx= yyy.str.split(expand=True).stack().value_counts()
-        # for data in live_dataset.columns:
-            # #print(data)
-        live_dataset =live_dataset.drop(['Date', 'User','IsVerified','Likes','RT',"User_location","Tweet"], axis = 1)
-        live_dataset.to_csv('api/output.csv', mode='a', index=False, header=False)
+#         xxx= yyy.str.split(expand=True).stack().value_counts()
+#         # for data in live_dataset.columns:
+#             # #print(data)
+#         live_dataset =live_dataset.drop(['Date', 'User','IsVerified','Likes','RT',"User_location","Tweet"], axis = 1)
+#         live_dataset.to_csv('api/output.csv', mode='a', index=False, header=False)
 
-        return JsonResponse({"data":{"date":df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),
-        "IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist()
-        ,"label":live_dataset["Sentiment"].to_list()
-        },"wordCounts":xxx.to_dict()})
+#         return JsonResponse({"data":{"date":df5['Date'].values.tolist(),'User':df5['User'].values.tolist(),
+#         "IsVerified":df5['IsVerified'].values.tolist(),"Tweet":df5['Tweet'].values.tolist(),"User_location":df5['User_location'].values.tolist()
+#         ,"label":live_dataset["Sentiment"].to_list()
+#         },"wordCounts":xxx.to_dict()})
 
-# from textblob.classifiers import NaiveBayesClassifier
-# df=pd.read_csv('api/train.csv')
-# df['tweet'] = df['tweet'].apply(lambda x : clean_tweet(x))
-# df['tweet']= df['tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
-# df['tweet']=df['tweet'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>2]))
-# mast_df=df[['tweet','label']].copy()
-# mast_df=list(zip(df['tweet'], df['label']))
-# first2k = mast_df[0:2000]
-# cl = NaiveBayesClassifier(first2k)
+# # from textblob.classifiers import NaiveBayesClassifier
+# # df=pd.read_csv('api/train.csv')
+# # df['tweet'] = df['tweet'].apply(lambda x : clean_tweet(x))
+# # df['tweet']= df['tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+# # df['tweet']=df['tweet'].apply(lambda x: ' '.join([w for w in x.split() if len(w)>2]))
+# # mast_df=df[['tweet','label']].copy()
+# # mast_df=list(zip(df['tweet'], df['label']))
+# # first2k = mast_df[0:2000]
+# # cl = NaiveBayesClassifier(first2k)
 
 from django.http import HttpResponse
 from datetime import datetime
@@ -631,10 +400,6 @@ def predict_class(text):
     # print('The predicted sentiment is', sentiment_classes[yt[0]])
     return sentiment_classes[yt[0]]
 
-
-def twitterSentiment2(request):
-    # print(tokenizer)
-    return HttpResponse(predict_class(["indian army killing peoples and spreading hate "]))
 
 
 
