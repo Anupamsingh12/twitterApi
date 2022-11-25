@@ -13,8 +13,10 @@ urlpatterns = [
     path('api/v2/twitter/sentiment/new', views.twitterSentimentNew),
     path('api/v2/news/sentiment/new', views.newsAnanlyserViewNew),
     path('api/v2/all/stats', views.allStats),
+    path('api/v2/word/stats', views.getWordPredictionStats),
     path('api/v2/news/trending', views.getTrendingNews),
     path('api/v2/twitter/trending', views.getTrendingTweets),
+    path('api/v2/twint', views.twintPredictionView),
     path('api/v2/twitter/download', views.save_file),
     path('admin/', admin.site.urls),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

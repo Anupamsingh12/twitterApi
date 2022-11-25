@@ -306,7 +306,7 @@ def getTrendingNews(request):
     return JsonResponse({'data':lst})
 
 @api_view(['GET'])
-def getTrendingTweets(request):
+def getTrendingTweets(request):git 
     consumer_key = "HgEwalkiOGT4GHwRr9dqCa7UU"
     consumer_secret = "zASPPh2IGxN8hqTMxSnAkGQtMSpHUoL7qR8GFcQCPJ8HEXUFAJ"
     access_token = "1466028468005703680-fs47RLAsOeWrkqN4TQapR8GZwnKhiX"
@@ -563,3 +563,76 @@ def newsAnanlyserViewNew(request):
         return JsonResponse({"source":news_articles_df['source'].values.tolist(),"pub_date":news_articles_df['pub_date'].values.tolist()
         ,"url":news_articles_df['url'].values.tolist(),"label":live_dataset["label"].values.tolist(),"wordCounts":xxx.to_dict()})
 
+from django.forms.models import model_to_dict
+def getWordPredictionStats(request):
+    
+    query22 = request.GET["query"]
+    #query = 'SELECT * FROM api_ModelPredictions where api_ModelPredictions.query_String = "{}" '.format(query)
+    #query2 = 'SELECT * FROM api_newsModelPredictions where api_newsModelPredictions.query_String = "{}" '.format(query)
+    
+    p=ModelPredictions.objects.filter(query_String=query22)
+    q=newsModelPredictions.objects.filter(query_String=query22)
+    
+    list_of_dicts = [model_to_dict(l) for l in p]
+    list_of_dict_news = [model_to_dict(l) for l in q]
+    return JsonResponse({"twitter":list_of_dicts,"news":list_of_dict_news})
+
+import twint
+import os
+
+import pandas as pd
+
+def readCsvForTwint():
+    pd_df = pd.read_csv("api/none.csv")
+    for p in pd_df.columns:
+        print(p)
+
+def columne_names():
+    return twint.output.panda.Tweets_df.columns
+def twint_to_pd(columns):
+    return twint.output.panda.Tweets_df[columns]
+
+def twintPredictionView(request):
+
+    c = twint.Config()
+    # c.Username = "noneprivacy"
+    for i in list(request.GET):
+        if i=='Search':
+            c.Search =request.GET[i]
+        elif i=="Near":
+            c.Near = request.GET[i]
+        elif i=="Since":
+            c.Since = request.GET[i]
+        elif i=="Username":
+            c.Username = request.GET[i]
+        elif i=="Limit":
+            c.Limit = int(request.GET[i])
+            # print(i) 
+    c.Pandas= True
+    c.Stats = True
+    c.Hide_output = True
+    pp=''
+    twint.run.Search(c)
+    pp=columne_names()
+    print(pp)
+    xx=twint_to_pd(pp)
+    print("=============================")
+    print(xx['tweet'])
+    xx['clean_tweet'] = xx['tweet'].apply(lambda x : clean_tweet(x))
+    print(xx['clean_tweet'])
+    xx["Sentiment"] = xx['clean_tweet'].apply(lambda x : predict_class([x]))
+    print(xx["Sentiment"])   
+    count= xx["Sentiment"].value_counts()
+    print(count)
+    tokenized_tweet=xx['clean_tweet'].str.replace("[^a-zA-Z#]", " ")
+        
+    tokenized_tweet = xx['clean_tweet'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+    for i in range(len(tokenized_tweet)):
+        tokenized_tweet[i] = ''.join(tokenized_tweet[i])
+    tokenized_tweet= tokenized_tweet.apply(lambda x: ' '.join([w for w in x.split() if len(w)>3]))
+    tokenized_tweet=  tokenized_tweet.str.replace('\d+', '')
+    yyy=tokenized_tweet
+        
+    xxx= yyy.str.split(expand=True).stack().value_counts()
+    print(xxx)
+    return JsonResponse({"data":{"date":xx["date"].values.tolist(),"tweet":xx["tweet"].values.tolist(),"sentiment":xx["Sentiment"].values.tolist(),"wordCounts":xxx.to_dict()}})
